@@ -6,7 +6,7 @@ import 'package:myfap/data/models/app_user.dart';
 import 'package:myfap/data/repositories/notification_repository.dart';
 
 /// Thông báo "Tất cả" phải tới được cả sinh viên, giảng viên và trưởng bộ môn;
-/// thông báo theo đối tượng chỉ tới đúng nhóm đó (myFAP gốc: tab Messages).
+/// thông báo theo đối tượng chỉ tới đúng nhóm đó.
 void main() {
   late FakeFirebaseFirestore db;
   late NotificationRepository notifications;

@@ -1,8 +1,8 @@
 import '../core/constants.dart';
 import '../data/models/class_session.dart';
 
-/// Tổng hợp điểm danh của một sinh viên trong một lớp, giống dòng
-/// "Absent 0% (0/10 sessions)" trên Attendance report của FAP.
+/// Tổng hợp điểm danh của một sinh viên trong một lớp, ví dụ
+/// "Vắng 0% (0/10 buổi)".
 class AttendanceSummary {
   const AttendanceSummary({
     required this.total,

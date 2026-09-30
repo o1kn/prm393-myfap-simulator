@@ -27,7 +27,7 @@ String _two(int n) => n.toString().padLeft(2, '0');
 String _dateLabel(DateTime d) =>
     '${_weekdays[d.weekday - 1]}, ${_two(d.day)}/${_two(d.month)}/${d.year}';
 
-/// Khung chính sau đăng nhập: 3 tab như myFAP gốc (Main / Messages / Profile).
+/// Khung chính sau đăng nhập: 3 tab Trang chủ / Thông báo / Cá nhân.
 class HomeShell extends StatefulWidget {
   const HomeShell({super.key});
 
@@ -95,7 +95,7 @@ typedef _MenuItem = ({
   WidgetBuilder page,
 });
 
-/// Nhóm chức năng theo vai trò, giống trang chủ myFAP; huy hiệu lấy từ [vm].
+/// Nhóm chức năng theo vai trò; huy hiệu lấy từ [vm].
 List<(String, List<_MenuItem>)> _menuFor(AppUser user, HomeViewModel vm) =>
     switch (user.role) {
       UserRole.student => [

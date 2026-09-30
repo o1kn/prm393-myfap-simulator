@@ -2,7 +2,7 @@
     <!-- Firebase cần mạng ở mọi bản build; quyền INTERNET của src/debug chỉ có ở bản debug. -->
     <uses-permission android:name="android.permission.INTERNET" />
     <application
-        android:label="myFAP giả lập"
+        android:label="myFAP Giả Lập"
         android:name="${applicationName}"
         android:icon="@mipmap/ic_launcher">
         <activity

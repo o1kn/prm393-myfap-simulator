@@ -1,4 +1,4 @@
-/// Trạng thái đơn, theo nhãn của myFAP gốc (applicaionP).
+/// Trạng thái xử lý của một đơn.
 enum ApplicationStatus {
   processing('Đang xử lý'),
   approved('Đã được chấp nhận'),

@@ -2,7 +2,7 @@ import 'package:intl/intl.dart';
 
 import '../../core/constants.dart';
 
-/// Trạng thái điểm danh một buổi, đúng 3 giá trị của myFAP gốc.
+/// Trạng thái điểm danh của một sinh viên trong một buổi.
 enum AttendanceStatus {
   present('Có mặt'),
   absent('Vắng'),

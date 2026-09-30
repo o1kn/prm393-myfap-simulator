@@ -4,7 +4,7 @@ import 'package:flutter/material.dart';
 /// diện sáng nó không làm nền cho chữ; nền nút dùng [_orangeDeep] (5,18:1).
 /// Ở giao diện tối, chữ tối trên cam FPT đạt 5,93:1 nên dùng đúng màu gốc.
 ///
-/// [fapNavy] là màu thanh tiêu đề / thanh tab của myFAP gốc (#1a2e4a).
+/// [fapNavy] là màu thanh tiêu đề / thanh tab của ứng dụng (#1a2e4a).
 const fptOrange = Color(0xFFF27024);
 const _orangeDeep = Color(0xFFC2410C);
 const fapNavy = Color(0xFF1A2E4A);

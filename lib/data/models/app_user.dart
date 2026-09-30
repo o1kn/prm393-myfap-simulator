@@ -1,5 +1,4 @@
-/// Vai trò trong hệ thống giả lập. myFAP gốc chỉ có sinh viên (và phụ huynh);
-/// ba vai trò còn lại tương ứng người dùng web FAP.
+/// Bốn vai trò người dùng của hệ thống.
 enum UserRole {
   staff('Cán bộ quản lý đào tạo'),
   head('Trưởng bộ môn'),

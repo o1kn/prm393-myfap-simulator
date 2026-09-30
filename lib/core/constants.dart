@@ -15,7 +15,7 @@ abstract final class Collections {
   static const notifications = 'notifications';
 }
 
-/// Khung giờ các slot, lấy theo trang Weekly timetable của FAP (2026).
+/// Khung giờ các slot trong ngày.
 const slotTimes = <int, String>{
   1: '07:30 - 09:50',
   2: '10:00 - 12:20',
@@ -23,7 +23,7 @@ const slotTimes = <int, String>{
   4: '15:20 - 17:40',
 };
 
-/// Danh mục loại đơn, lấy từ trang "Submit application" của FAP.
+/// Danh mục loại đơn sinh viên được gửi.
 const applicationTypes = <String>[
   'Xin chuyển lớp học',
   'Xin tạm nghỉ một học kỳ',

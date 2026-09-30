@@ -180,7 +180,7 @@ class _LoginHero extends StatelessWidget {
                 fit: BoxFit.scaleDown,
                 alignment: Alignment.centerLeft,
                 child: Text(
-                  'myFAP',
+                  'myFAP Giả Lập',
                   style: text.displayMedium?.copyWith(
                     color: Colors.white,
                     fontWeight: FontWeight.w800,
@@ -200,7 +200,7 @@ class _LoginHero extends StatelessWidget {
               ),
               const SizedBox(height: 12),
               Text(
-                'Ứng dụng giả lập · FPT University',
+                'FPT University',
                 style: text.bodyLarge?.copyWith(color: Colors.white70),
               ),
             ],

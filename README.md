@@ -1,15 +1,12 @@
-# myFAP – Ứng dụng giả lập (PRM393)
+# myFAP Giả Lập (PRM393)
 
-Ứng dụng Android viết bằng Flutter, giả lập hệ thống FAP / myFAP của Đại học FPT với 4 vai trò: **cán bộ quản lý đào tạo**,
+Ứng dụng Android viết bằng Flutter, quản lý đào tạo cho trường đại học với 4 vai trò: **cán bộ quản lý đào tạo**,
 **trưởng bộ môn**, **giảng viên**, **sinh viên**.
-
-Phân tích ứng dụng gốc (myFAP 2.0.5 + web FAP): [`docs/phan_tich_myfap_goc.md`](docs/phan_tich_myfap_goc.md).
 
 ## 1. Bài toán
 
-myFAP gốc là app **chỉ để xem** của sinh viên: lịch học, điểm danh, điểm, bảng điểm, đơn từ, thông báo. Dữ liệu do cán bộ
-đào tạo, trưởng bộ môn và giảng viên nhập trên web FAP. Bản giả lập đưa cả 4 vai trò vào một app, dùng **chung một nguồn dữ
-liệu** (Cloud Firestore), để quy trình chạy trọn từ đầu đến cuối:
+Mỗi vai trò làm một phần việc, và kết quả của người này là dữ liệu người kia cần xem. Vì vậy cả 4 vai trò dùng **chung
+một nguồn dữ liệu** (Cloud Firestore), để quy trình chạy trọn từ đầu đến cuối:
 
 ```
 Cán bộ ĐT mở lớp + xếp lịch ─▶ Trưởng BM phân công GV ─▶ GV điểm danh ─▶ SV thấy có mặt / vắng, % vắng
@@ -20,8 +17,8 @@ Cán bộ ĐT đăng thông báo ─▶ SV / GV thấy theo đối tượng nh�
 
 ## 2. Kiến trúc
 
-**Client – server, giống myFAP gốc.** App gốc: màn hình → service → REST API trên máy chủ FAP.
-Bản giả lập: màn hình → ViewModel → Repository → **Firebase Auth + Cloud Firestore**.
+**Client – server.** Ứng dụng là client; máy chủ là **Firebase Auth + Cloud Firestore**, dùng chung cho 4 vai trò.
+Luồng gọi: màn hình → ViewModel → Repository → Firebase.
 
 **Trong app: MVVM với Provider.**
 
@@ -56,7 +53,7 @@ tool/probe_rules.dart             kiểm tra phân quyền trên Firebase thật
 test/                             domain/, workflow/, widget/
 ```
 
-Điều hướng: `Splash → Login → Home`. Home có 3 tab như myFAP gốc: Trang chủ (chức năng theo vai trò), Thông báo, Cá nhân.
+Điều hướng: `Splash → Login → Home`. Home có 3 tab: Trang chủ (chức năng theo vai trò), Thông báo, Cá nhân.
 Firebase Auth giữ phiên nên mở lại app vào thẳng Home.
 
 ## 3. Dữ liệu (Cloud Firestore)

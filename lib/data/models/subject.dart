@@ -1,5 +1,4 @@
-/// Một đầu điểm trong cấu trúc điểm môn học (Grade report của FAP:
-/// Mark group / Weight (%)).
+/// Một đầu điểm trong cấu trúc điểm môn học (tên + trọng số %).
 class GradeComponent {
   const GradeComponent({
     required this.name,

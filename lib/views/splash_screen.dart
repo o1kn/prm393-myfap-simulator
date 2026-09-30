@@ -38,7 +38,7 @@ class _SplashScreenState extends State<SplashScreen> {
           mainAxisSize: MainAxisSize.min,
           children: [
             Text(
-              'myFAP',
+              'myFAP Giả Lập',
               style: TextStyle(
                 color: Colors.white,
                 fontSize: 36,

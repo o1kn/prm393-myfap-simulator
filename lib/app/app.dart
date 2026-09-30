@@ -45,7 +45,7 @@ class MyFapApp extends StatelessWidget {
         ),
       ],
       child: MaterialApp(
-        title: 'myFAP (giả lập)',
+        title: 'myFAP Giả Lập',
         debugShowCheckedModeBanner: false,
         theme: buildLightTheme(),
         darkTheme: buildDarkTheme(),
