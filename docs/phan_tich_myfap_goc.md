@@ -153,3 +153,25 @@ Cán bộ ĐT đăng thông báo                  → SV / GV thấy thông báo
 ```
 
 Ngưỡng vắng 20% và điều kiện qua môn (TB ≥ 5, không có đầu điểm 0) là quy chế FPT phổ biến, **[Suy luận]** không có trong bundle.
+
+### 7.1 Màn hình bản giả lập thêm mà myFAP gốc không có
+
+myFAP gốc là app sinh viên **chỉ để xem**; ba vai trò còn lại tương ứng phần web FAP mà bundle không chứa. Các màn hình
+dưới đây vì vậy lấy mô hình từ web FAP (tài liệu nghiệp vụ + quy trình đào tạo), không phải từ bundle:
+
+| Màn hình (bản giả lập) | Vai trò | Mô hình lấy từ |
+|---|---|---|
+| Lớp môn & lịch học: mở lớp, xếp lịch, kiểm tra trùng phòng | Cán bộ ĐT | web FAP – màn "Lớp môn" |
+| Chi tiết lớp: sĩ số, lịch, danh sách sinh viên, **ghi danh bổ sung** | Cán bộ ĐT | web FAP – chi tiết lớp + danh sách sinh viên |
+| Quản lý tài khoản: mở tài khoản sinh viên / giảng viên (mã giữ chỗ toàn cục) | Cán bộ ĐT | web FAP – quản lý người dùng |
+| Phân công giảng viên theo bộ môn | Trưởng bộ môn | web FAP – phân công giảng dạy |
+| Nhập điểm theo lớp + gửi duyệt; duyệt công bố / trả lại kèm lý do | Giảng viên, Trưởng bộ môn | web FAP – bảng điểm lớp |
+| Điểm danh từng buổi (chỉ buổi chưa tới, lớp chưa công bố) | Giảng viên | web FAP – điểm danh buổi học |
+
+Hai điểm khác biệt có chủ ý so với myFAP gốc, vì gốc không có phần "tạo dữ liệu":
+
+1. **Ghi danh muộn**: chỉ thêm sinh viên vào buổi chưa tới và chưa điểm danh — không bịa điểm danh quá khứ, nên tỉ lệ vắng
+   của sinh viên vào muộn tính trên đúng số buổi họ còn học được (khác cách tính `numberOfTakenAttendances` của gốc, vốn
+   luôn tính trên toàn bộ buổi của lớp).
+2. **Cảnh báo mất dữ liệu**: màn nhập điểm / điểm danh chặn back khi còn thay đổi chưa lưu — gốc là app chỉ xem nên không có
+   tình huống này.
