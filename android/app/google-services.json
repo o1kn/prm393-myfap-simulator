@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "767295415651",
+    "project_id": "prm393-myfap-sim",
+    "storage_bucket": "prm393-myfap-sim.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:767295415651:android:add16d7c4b3c9cfedd1f56",
+        "android_client_info": {
+          "package_name": "vn.edu.fpt.myfap_sim"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDb6hU2JcBdE0-YTeaIFTcVa4mlF3KTPk8"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
