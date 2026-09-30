@@ -1,4 +1,6 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android">
+    <!-- Firebase cần mạng ở mọi bản build; quyền INTERNET của src/debug chỉ có ở bản debug. -->
+    <uses-permission android:name="android.permission.INTERNET" />
     <application
         android:label="myFAP giả lập"
         android:name="${applicationName}"

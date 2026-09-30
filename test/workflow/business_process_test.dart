@@ -184,6 +184,10 @@ void main() {
       final sheet = GradeSheetViewModel(academic, grades, users, course);
       await sheet.load();
       expect(sheet.setMark(an.uid, 'Assignment', '11'), isNotNull);
+      // Ô lỗi chặn cả lưu nháp: không ghi gì xuống Firestore.
+      expect(await sheet.saveDraft(), isFalse);
+      expect(sheet.error, contains('không hợp lệ'));
+      expect(await grades.gradesOfClass(course.id), isEmpty);
       sheet
         ..setMark(an.uid, 'Assignment', '8')
         ..setMark(an.uid, 'Final Exam', '7');

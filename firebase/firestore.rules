@@ -62,6 +62,9 @@ service cloud.firestore {
           && classOf(request.resource.data.classId).gradeStatus in ['draft', 'returned']
           && request.resource.data.published == false)
         || (isHead() && classOf(resource.data.classId).department == me().department
+          // Trong batch công bố, get() đọc trạng thái lớp trước khi ghi (submitted).
+          && classOf(resource.data.classId).gradeStatus == 'submitted'
+          && request.resource.data.published == true
           && onlyChanges(['published']));
     }
 

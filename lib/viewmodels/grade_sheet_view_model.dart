@@ -25,6 +25,10 @@ class GradeSheetViewModel extends BaseViewModel {
   /// uid sinh viên → (tên đầu điểm → điểm).
   final Map<String, Map<String, double>> marks = {};
 
+  /// Các ô có nội dung không hợp lệ (`'uid|đầu điểm'`). Ô lỗi thì chưa xác
+  /// định được điểm, nên phải chặn cả lưu nháp và gửi duyệt.
+  final Set<String> invalidCells = {};
+
   bool get editable => course.gradeStatus.lecturerCanEdit;
 
   Future<void> load() => run(() async {
@@ -39,17 +43,28 @@ class GradeSheetViewModel extends BaseViewModel {
       ..addAll({
         for (final s in students) s.uid: {...?existing[s.uid]?.marks},
       });
+    invalidCells.clear();
   });
 
   /// Ghi điểm vừa nhập; [input] rỗng = xoá điểm. Trả về lỗi hoặc null.
+  ///
+  /// Input sai không ghi đè điểm cũ nhưng ô được đánh dấu lỗi để [_save]
+  /// chặn lại, tránh lưu điểm cũ trong khi UI đang báo đỏ.
   String? setMark(String studentId, String component, String input) {
+    final key = '$studentId|$component';
     if (input.trim().isEmpty) {
       marks[studentId]!.remove(component);
+      invalidCells.remove(key);
       notify();
       return null;
     }
     final error = validateMark(input);
-    if (error != null) return error;
+    if (error != null) {
+      invalidCells.add(key);
+      notify();
+      return error;
+    }
+    invalidCells.remove(key);
     marks[studentId]![component] = double.parse(
       input.trim().replaceAll(',', '.'),
     );
@@ -71,6 +86,9 @@ class GradeSheetViewModel extends BaseViewModel {
   Future<bool> _save({required bool submit}) => run(() async {
     if (!editable) {
       throw const AppException('Bảng điểm đã gửi duyệt, không thể sửa');
+    }
+    if (invalidCells.isNotEmpty) {
+      throw const AppException('Còn ô điểm không hợp lệ, kiểm tra lại');
     }
     if (submit && completeCount < students.length) {
       throw AppException(
