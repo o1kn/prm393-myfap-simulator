@@ -165,12 +165,13 @@ Bốn chức năng thêm sau buổi chạy TC01–TC21 — chi tiết lớp + gh
 | TC26 | sonnt@myfap.vn | Nhập điểm → PRM393 → nhập 8 cho HE170001 → back | Banner "Chưa lưu thay đổi", hộp thoại "Còn thay đổi chưa lưu" (Ở lại / Bỏ thay đổi / Lưu); chọn Lưu → "Đã lưu nháp" và về danh sách lớp | [chưa lưu](docs/demo/tc26_chua_luu.png), [hộp thoại](docs/demo/tc26_hoi_bo_thay_doi.png), [đã lưu](docs/demo/tc26_da_luu_nhap.png) |
 | TC27 | hunglv@myfap.vn | Lịch dạy & điểm danh → buổi AIL303m hôm nay | "Lớp đã công bố: điểm danh chỉ xem, không thể sửa", không có công tắc và nút lưu | [tc27](docs/demo/tc27_diem_danh_lop_cong_bo.png) |
 | TC28 | he170002@myfap.vn | Bảng điểm → chạm môn PRN212 → "Xem điểm danh môn này" | Mở thẳng Điểm học kỳ của PRN212 (TB 7.2, Passed) rồi Điểm danh của đúng môn đó; phần Tổng quan liệt kê mọi môn kèm "Vắng x/y" và "còn N buổi được phép vắng thêm" | [tổng quan](docs/demo/tc28_diem_danh_tong_quan.png), [bảng điểm](docs/demo/tc28_bang_diem.png), [điểm học kỳ](docs/demo/tc28_diem_hoc_ky.png), [điểm danh môn](docs/demo/tc28_diem_danh_theo_mon.png), [lịch dạy GV](docs/demo/tc28_lich_day_tuan.png) |
+| TC29 | he170005@myfap.vn | Đổi máy sang 320dp + cỡ chữ hệ thống 2.0 → mở Trang chủ | Trước: nhãn ô số liệu bị cắt "Buổi học h…", "Đơn đang …". Sau: hai ô xếp dọc, nhãn đủ "Buổi học hôm nay", "Đơn đang xử lý"; máy thường (cỡ chữ 1.0) vẫn xếp ngang | [trước](docs/demo/tc29_man_hinh_nho_truoc.png), [sau](docs/demo/tc29_man_hinh_nho_sau.png) |
 
 Mở lại app sau khi đã đăng nhập thì vào thẳng Trang chủ (Firebase Auth giữ phiên): [ảnh](docs/demo/gv_trang_chu_tu_dang_nhap.png).
 
-Test tự động (26 test): `test/workflow/business_process_test.dart` (mở lớp → phân công → điểm danh → nhập điểm → trả lại →
+Test tự động (41 test): `test/workflow/business_process_test.dart` (mở lớp → phân công → điểm danh → nhập điểm → trả lại →
 công bố → SV xem; đơn từ), `test/domain/rules_test.dart`, `test/widget/` (điểm danh, form gửi đơn, còn thay đổi chưa lưu,
-thông báo theo đối tượng nhận, dựng màn bảng điểm và lịch tuần).
+thông báo theo đối tượng nhận, dựng màn bảng điểm và lịch tuần, màn hình 320dp + chữ phóng to 2x).
 
 ### Kiểm tra phân quyền trên Firebase thật
 
@@ -212,12 +213,14 @@ lưu dạng chuỗi `yyyy-MM-dd`, không so được với giờ máy chủ). Ph
 
 ### Lỗi tìm thấy khi chạy thật và cách sửa
 
-Hai lỗi chỉ lộ ra trên máy thật (test giả lập không thấy), đã sửa và khoá lại bằng test/probe:
+Bốn lỗi chỉ lộ ra trên máy thật hoặc khi đổi cỡ chữ (test thường không thấy), đã sửa và khoá lại bằng test/probe:
 
 | Lỗi | Nguyên nhân | Sửa |
 |---|---|---|
 | Bảng điểm trắng trơn, `Null check operator used on a null value` ở `GradeSheetViewModel.completeCount` | Truy vấn buổi học của giảng viên (`where classId`) bị rules từ chối → `sessions`/`marks` không tải, màn hình vẫn dựng | Thêm `sessionsOfLecturerInClass` (lọc thêm `lecturerId`), đọc điểm/buổi an toàn khi thiếu dữ liệu; probe kiểm luôn nhánh truy vấn |
 | Lịch tuần trắng phần danh sách buổi (cả SV và GV) | `Row(crossAxisAlignment: stretch)` trong `ListView` → "BoxConstraints forces an infinite height", thẻ không dựng được | Bọc `IntrinsicHeight` cho `Row` của thẻ buổi học; test `timetable_render_test.dart` giữ lỗi không quay lại |
+| Nhãn ô số liệu bị cắt "Buổi học h…" khi cỡ chữ hệ thống 2.0 trên màn nhỏ (chỉ lộ khi đổi cỡ chữ trên máy) | Hai `StatTile` cạnh nhau (mỗi ô ~ nửa chiều ngang) không đủ chỗ cho nhãn dài | Thêm `StatRow`: chữ phóng to từ 1.5 lần thì xếp dọc, còn lại xếp ngang; test kiểm nhãn không bị cắt |
+| Màn Quản lý tài khoản (320dp, chữ 2x) tràn ngang; dòng cuối bị nút "Tạo tài khoản" che | Chip vai trò nằm ở `ListTile.trailing`, dropdown không `isExpanded`, đệm dưới 24 nhỏ hơn chiều cao nút | Chip chuyển xuống `subtitle`, dropdown `isExpanded` + cắt chữ bằng `…`, đệm dưới 88; `small_screen_test.dart` kiểm 13 màn hình không tràn |
 
 ## 7. Cài đặt và chạy
 

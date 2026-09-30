@@ -236,22 +236,14 @@ class _SessionHero extends StatelessWidget {
           ),
           if (vm.editable) ...[
             const SizedBox(height: 16),
-            Row(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Expanded(
-                  child: StatTile(value: '$present', label: 'Có mặt'),
-                ),
-                const SizedBox(width: 12),
-                Expanded(
-                  child: StatTile(
-                    value: '${vm.absentCount}',
-                    label: 'Vắng',
-                    highlight: vm.absentCount > 0,
-                  ),
-                ),
-              ],
-            ),
+            StatRow([
+              StatTile(value: '$present', label: 'Có mặt'),
+              StatTile(
+                value: '${vm.absentCount}',
+                label: 'Vắng',
+                highlight: vm.absentCount > 0,
+              ),
+            ]),
             const SizedBox(height: 12),
             Row(
               children: [

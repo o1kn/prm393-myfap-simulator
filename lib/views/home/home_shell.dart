@@ -277,23 +277,14 @@ class _HomeTab extends StatelessWidget {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    IntrinsicHeight(
-                      child: Row(
-                        crossAxisAlignment: CrossAxisAlignment.stretch,
-                        children: [
-                          for (final (i, s) in stats.indexed) ...[
-                            if (i > 0) const SizedBox(width: 12),
-                            Expanded(
-                              child: StatTile(
-                                value: vm.loaded ? '${s.$2}' : '–',
-                                label: s.$1,
-                                highlight: vm.loaded && s.$3,
-                              ),
-                            ),
-                          ],
-                        ],
-                      ),
-                    ),
+                    StatRow([
+                      for (final s in stats)
+                        StatTile(
+                          value: vm.loaded ? '${s.$2}' : '–',
+                          label: s.$1,
+                          highlight: vm.loaded && s.$3,
+                        ),
+                    ]),
                     if (showNext && vm.loaded) ...[
                       const SizedBox(height: 12),
                       _NextSession(

@@ -270,6 +270,41 @@ class StatTile extends StatelessWidget {
   }
 }
 
+/// Hàng ô số liệu. Đủ chỗ thì xếp ngang cho gọn; khi chữ được phóng to
+/// (trợ năng) thì tự xếp dọc, nếu không nhãn dài như "Buổi học hôm nay" sẽ bị
+/// cắt thành "Buổi học h...".
+class StatRow extends StatelessWidget {
+  const StatRow(this.tiles, {super.key});
+
+  final List<StatTile> tiles;
+
+  @override
+  Widget build(BuildContext context) {
+    // Chữ phóng to từ 1,5 lần trở lên thì hai ô cạnh nhau không còn đủ chỗ.
+    if (MediaQuery.textScalerOf(context).scale(1) >= 1.5) {
+      return Column(
+        children: [
+          for (final (i, tile) in tiles.indexed) ...[
+            if (i > 0) const SizedBox(height: 12),
+            tile,
+          ],
+        ],
+      );
+    }
+    return IntrinsicHeight(
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          for (final (i, tile) in tiles.indexed) ...[
+            if (i > 0) const SizedBox(width: 12),
+            Expanded(child: tile),
+          ],
+        ],
+      ),
+    );
+  }
+}
+
 /// Hiện lỗi / thông báo thành công của một thao tác ghi.
 void showResult(BuildContext context, BaseViewModel vm, String success) {
   ScaffoldMessenger.of(context)

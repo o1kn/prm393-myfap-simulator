@@ -73,17 +73,25 @@ class _StaffAccountsViewState extends State<_StaffAccountsView> {
                 padding: const EdgeInsets.fromLTRB(16, 8, 16, 0),
                 child: DropdownButtonFormField<UserRole?>(
                   initialValue: vm.roleFilter,
+                  // Chữ phóng to 2x trên màn 320dp: không cho nhãn đẩy tràn ngang.
+                  isExpanded: true,
                   decoration:
                       const InputDecoration(labelText: 'Vai trò'),
                   items: const [
-                    DropdownMenuItem(value: null, child: Text('Tất cả')),
+                    DropdownMenuItem(
+                      value: null,
+                      child: Text('Tất cả', overflow: TextOverflow.ellipsis),
+                    ),
                     DropdownMenuItem(
                       value: UserRole.student,
-                      child: Text('Sinh viên'),
+                      child: Text('Sinh viên', overflow: TextOverflow.ellipsis),
                     ),
                     DropdownMenuItem(
                       value: UserRole.lecturer,
-                      child: Text('Giảng viên'),
+                      child: Text(
+                        'Giảng viên',
+                        overflow: TextOverflow.ellipsis,
+                      ),
                     ),
                   ],
                   onChanged: vm.setRoleFilter,
@@ -93,7 +101,8 @@ class _StaffAccountsViewState extends State<_StaffAccountsView> {
                 child: RefreshIndicator(
                   onRefresh: vm.load,
                   child: ListView.builder(
-                    padding: const EdgeInsets.fromLTRB(16, 8, 16, 24),
+                    // Chừa chỗ cho nút "Tạo tài khoản" để dòng cuối không bị che.
+                    padding: const EdgeInsets.fromLTRB(16, 8, 16, 88),
                     itemCount: vm.filtered.length,
                     itemBuilder: (context, i) {
                       final p = vm.filtered[i];
@@ -110,18 +119,27 @@ class _StaffAccountsViewState extends State<_StaffAccountsView> {
                             overflow: TextOverflow.ellipsis,
                             style: text.titleSmall,
                           ),
-                          subtitle: Text(
-                            '${p.code} · ${p.email}'
-                            '${p.department.isEmpty ? '' : ' · ${p.department}'}',
-                            maxLines: 2,
-                            overflow: TextOverflow.ellipsis,
+                          // Nhãn vai trò nằm trong subtitle: để ở trailing thì
+                          // tràn ngang khi chữ phóng to (màn 320dp, chữ 2x).
+                          subtitle: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                '${p.code} · ${p.email}'
+                                '${p.department.isEmpty ? '' : ' · ${p.department}'}',
+                                maxLines: 2,
+                                overflow: TextOverflow.ellipsis,
+                              ),
+                              const SizedBox(height: 4),
+                              StatusChip(
+                                p.role.label,
+                                p.role == UserRole.student
+                                    ? Tone.pending
+                                    : Tone.good,
+                              ),
+                            ],
                           ),
-                          trailing: StatusChip(
-                            p.role.label,
-                            p.role == UserRole.student
-                                ? Tone.pending
-                                : Tone.good,
-                          ),
+                          isThreeLine: true,
                         ),
                       );
                     },
