@@ -18,9 +18,9 @@ class CreateClassViewModel extends BaseViewModel {
   Subject? subject;
   final Set<String> selectedStudents = {};
   final Set<int> weekdays = {};
+  String? createdClassId;
   int slot = 1;
   DateTime startDate = DateTime.now();
-
   Future<void> load() => run(() async {
     subjects = await _academic.subjects();
     students = await _users.students();
@@ -66,7 +66,7 @@ class CreateClassViewModel extends BaseViewModel {
         if (selectedStudents.isEmpty) {
           throw const AppException('Chọn ít nhất một sinh viên');
         }
-        await _academic.createClassWithSchedule(
+        createdClassId = await _academic.createClassWithSchedule(
           subject: subject!,
           classCode: classCode,
           studentIds: selectedStudents.toList(),

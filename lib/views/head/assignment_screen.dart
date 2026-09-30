@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
+import '../../app/app_theme.dart';
 import '../../data/models/app_user.dart';
 import '../../data/models/course_class.dart';
 import '../../data/repositories/academic_repository.dart';
@@ -35,7 +36,11 @@ class _AssignmentView extends StatelessWidget {
     final vm = context.watch<AssignmentViewModel>();
     return Scaffold(
       appBar: AppBar(
-        title: Text('Phân công GV (${vm.unassignedCount} lớp chưa có)'),
+        title: Text(
+          'Phân công GV (${vm.unassignedCount} lớp chưa có)',
+          maxLines: 1,
+          overflow: TextOverflow.ellipsis,
+        ),
       ),
       body: RefreshIndicator(
         onRefresh: vm.load,
@@ -44,27 +49,54 @@ class _AssignmentView extends StatelessWidget {
           isEmpty: vm.classes.isEmpty,
           emptyText: 'Bộ môn chưa có lớp nào',
           onRetry: vm.load,
-          builder: (context) => ListView.builder(
-            padding: const EdgeInsets.all(16),
-            itemCount: vm.classes.length,
-            itemBuilder: (context, i) {
-              final c = vm.classes[i];
-              return Card(
-                margin: const EdgeInsets.only(bottom: 8),
-                child: ListTile(
-                  title: Text('${c.title} · ${c.subjectName}'),
-                  subtitle: Text(
-                    c.lecturerName == null
-                        ? 'Chưa phân công'
-                        : 'Giảng viên: ${c.lecturerName}',
+          builder: (context) => ContentWidth(
+            child: ListView.builder(
+              padding: const EdgeInsets.all(16),
+              itemCount: vm.classes.length,
+              itemBuilder: (context, i) {
+                final c = vm.classes[i];
+                final assigned = c.lecturerId != null;
+                return Card(
+                  margin: const EdgeInsets.only(bottom: 12),
+                  child: Padding(
+                    padding: const EdgeInsets.all(16),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          '${c.title} · ${c.subjectName}',
+                          maxLines: 3,
+                          overflow: TextOverflow.ellipsis,
+                          style: Theme.of(context).textTheme.titleMedium
+                              ?.copyWith(fontWeight: FontWeight.w700),
+                        ),
+                        const SizedBox(height: 12),
+                        Wrap(
+                          spacing: 8,
+                          runSpacing: 8,
+                          crossAxisAlignment: WrapCrossAlignment.center,
+                          children: [
+                            StatusChip(
+                              assigned
+                                  ? 'Giảng viên: ${c.lecturerName ?? c.lecturerId}'
+                                  : 'Chưa phân công',
+                              assigned ? Tone.good : Tone.pending,
+                            ),
+                            OutlinedButton.icon(
+                              icon: const Icon(Icons.person_add_alt_outlined),
+                              onPressed: vm.busy
+                                  ? null
+                                  : () => _pick(context, vm, c),
+                              label: Text(assigned ? 'Đổi GV' : 'Phân công'),
+                            ),
+                          ],
+                        ),
+                      ],
+                    ),
                   ),
-                  trailing: TextButton(
-                    onPressed: vm.busy ? null : () => _pick(context, vm, c),
-                    child: Text(c.lecturerId == null ? 'Phân công' : 'Đổi GV'),
-                  ),
-                ),
-              );
-            },
+                );
+              },
+            ),
           ),
         ),
       ),
@@ -91,8 +123,16 @@ class _AssignmentView extends StatelessWidget {
             for (final l in vm.lecturers)
               ListTile(
                 leading: const Icon(Icons.person_outline),
-                title: Text(l.fullName),
-                subtitle: Text(l.code),
+                title: Text(
+                  l.fullName,
+                  maxLines: 2,
+                  overflow: TextOverflow.ellipsis,
+                ),
+                subtitle: Text(
+                  l.code,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                ),
                 selected: l.uid == course.lecturerId,
                 onTap: () => Navigator.pop(sheet, l),
               ),

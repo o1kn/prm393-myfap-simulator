@@ -61,7 +61,8 @@ class AcademicRepository {
 
   /// Cán bộ đào tạo mở lớp môn và xếp lịch trong một lần ghi (batch).
   /// Từ chối nếu trùng mã lớp của cùng môn trong kỳ, hoặc trùng phòng/slot.
-  Future<void> createClassWithSchedule({
+  /// Trả về id lớp vừa tạo để màn hình mở chi tiết ngay sau khi tạo.
+  Future<String> createClassWithSchedule({
     required Subject subject,
     required String classCode,
     required List<String> studentIds,
@@ -124,6 +125,7 @@ class AcademicRepository {
       batch.set(_sessions.doc(s.id), s.toMap());
     }
     await batch.commit();
+    return classRef.id;
   }
 
   /// Trưởng bộ môn phân công giảng viên: cập nhật lớp và mọi buổi của lớp
@@ -141,6 +143,100 @@ class AcademicRepository {
     await batch.commit();
   }
 
+  /// Cán bộ đào tạo thêm sinh viên đã có tài khoản vào lớp.
+  /// Chỉ cho phép khi bảng điểm còn `draft` / `returned`; trạng thái được
+  /// đọc lại trong transaction nên cuộc gửi duyệt chen ngang sẽ bị từ chối.
+  /// Sinh viên chỉ được ghi danh vào buổi chưa tới và chưa điểm danh
+  /// (`!date.isBefore(today)` trước, `attendance` rỗng sau); buổi đã qua
+  /// hoặc đã điểm danh giữ nguyên, không bịa điểm danh quá khứ. Giữ mọi id
+  /// cũ bằng `arrayUnion`. Trả về số buổi đã ghi danh thêm.
+  Future<int> enrollExistingStudent({
+    required String classId,
+    required String studentUid,
+  }) async {
+    final classRef = _classes.doc(classId);
+    final existing = await classRef.get();
+    final existingData = existing.data();
+    if (existingData == null) {
+      throw const AppException('Không tìm thấy lớp');
+    }
+    final course = CourseClass.fromMap(existing.id, existingData);
+    _requireEnrollable(course);
+    if (course.studentIds.contains(studentUid)) {
+      throw const AppException('Sinh viên đã có trong lớp');
+    }
+    if (course.studentIds.length >= 200) {
+      throw const AppException('Lớp đã đủ 200 sinh viên');
+    }
+    final sessions = await sessionsOfClass(classId);
+    if (sessions.isEmpty) {
+      throw const AppException('Lớp chưa có lịch học');
+    }
+    final now = DateTime.now();
+    final today = DateTime(now.year, now.month, now.day);
+    final targets = [
+      for (final s in sessions)
+        if (!s.date.isBefore(today) &&
+            !s.taken &&
+            !s.studentIds.contains(studentUid))
+          s,
+    ];
+
+    return _db.runTransaction<int>((tx) async {
+      // Firestore yêu cầu đọc hết trước khi ghi trong một transaction, nên
+      // đọc lớp + mọi buổi trước rồi mới ghi.
+      final fresh = await tx.get(classRef);
+      final freshData = fresh.data();
+      if (freshData == null) {
+        throw const AppException('Không tìm thấy lớp');
+      }
+      final freshCourse = CourseClass.fromMap(fresh.id, freshData);
+      _requireEnrollable(freshCourse);
+      if (freshCourse.studentIds.contains(studentUid)) {
+        throw const AppException('Sinh viên đã có trong lớp');
+      }
+      final reads = [
+        for (final s in targets) (s, await tx.get(_sessions.doc(s.id))),
+      ];
+
+      tx.update(classRef, {
+        'studentIds': FieldValue.arrayUnion([studentUid]),
+      });
+      var added = 0;
+      for (final (s, snap) in reads) {
+        final data = snap.data();
+        if (data == null) {
+          throw AppException('Không tìm thấy buổi ${s.sessionNo} của lớp');
+        }
+        final attendance = Map<String, dynamic>.from(
+          data['attendance'] as Map? ?? const {},
+        );
+        if (attendance.isNotEmpty) continue;
+        final ids = List<String>.from(data['studentIds'] as List);
+        if (ids.contains(studentUid)) continue;
+        tx.update(_sessions.doc(s.id), {
+          'studentIds': FieldValue.arrayUnion([studentUid]),
+        });
+        added++;
+      }
+      return added;
+    });
+  }
+
+  void _requireEnrollable(CourseClass course) {
+    switch (course.gradeStatus) {
+      case GradeStatus.draft:
+      case GradeStatus.returned:
+        return;
+      case GradeStatus.submitted:
+        throw const AppException('Lớp đã gửi duyệt, không thể thêm sinh viên');
+      case GradeStatus.published:
+        throw const AppException(
+          'Lớp đã công bố điểm, không thể thêm sinh viên',
+        );
+    }
+  }
+
   // ---------- Buổi học & điểm danh ----------
 
   Future<List<ClassSession>> sessionsOfStudent(String uid) =>
@@ -151,6 +247,20 @@ class AcademicRepository {
 
   Future<List<ClassSession>> sessionsOfClass(String classId) =>
       _querySessions(_sessions.where('classId', isEqualTo: classId));
+
+  /// Buổi học của lớp theo góc nhìn giảng viên dạy lớp.
+  ///
+  /// Firestore chỉ cho truy vấn khi rules chứng minh được với chính bộ lọc
+  /// của truy vấn: lọc mỗi `classId` thì nhánh `lecturerId == uid` không
+  /// chứng minh được (bị PERMISSION_DENIED), nên phải lọc thêm `lecturerId`.
+  Future<List<ClassSession>> sessionsOfLecturerInClass(
+    String classId,
+    String lecturerUid,
+  ) => _querySessions(
+    _sessions
+        .where('classId', isEqualTo: classId)
+        .where('lecturerId', isEqualTo: lecturerUid),
+  );
 
   Future<List<ClassSession>> _sessionsOnDates(List<String> dateKeys) async {
     final result = <ClassSession>[];

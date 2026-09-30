@@ -58,12 +58,18 @@ Future<void> main() async {
     'grades',
     'applications',
     'notifications',
+    'userCodes',
   ]) {
     await _clear(c);
   }
 
   for (final e in people.entries) {
     await _put('users', uid[e.key]!, e.value);
+  }
+  for (final e in people.entries) {
+    await _put('userCodes', e.value['code']!.toUpperCase(), {
+      'uid': uid[e.key]!,
+    });
   }
 
   // ---------- Môn học ----------

@@ -7,6 +7,7 @@ import '../../data/repositories/academic_repository.dart';
 import '../../data/repositories/user_repository.dart';
 import '../../viewmodels/staff/create_class_view_model.dart';
 import '../widgets/common.dart';
+import 'class_detail_screen.dart';
 
 const _weekdayLabels = {1: 'T2', 2: 'T3', 3: 'T4', 4: 'T5', 5: 'T6', 6: 'T7'};
 
@@ -55,9 +56,11 @@ class _CreateClassViewState extends State<_CreateClassView> {
         isEmpty: vm.subjects.isEmpty,
         emptyText: 'Chưa có môn học',
         onRetry: vm.load,
-        builder: (context) => ListView(
-          padding: const EdgeInsets.fromLTRB(16, 16, 16, 120),
+        builder: (context) => ContentWidth(
+          child: ListView(
+          padding: const EdgeInsets.fromLTRB(16, 0, 16, 24),
           children: [
+            const SectionLabel('Môn học'),
             DropdownButtonFormField(
               initialValue: vm.subject,
               isExpanded: true,
@@ -68,40 +71,32 @@ class _CreateClassViewState extends State<_CreateClassView> {
                     value: s,
                     child: Text(
                       '${s.code} · ${s.name} (${s.totalSessions} buổi)',
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
                     ),
                   ),
               ],
               onChanged: vm.setSubject,
             ),
             const SizedBox(height: 12),
-            Row(
-              children: [
-                Expanded(
-                  child: TextField(
-                    controller: _code,
-                    textCapitalization: TextCapitalization.characters,
-                    decoration: const InputDecoration(
-                      labelText: 'Mã lớp',
-                      hintText: 'SE1950',
-                    ),
-                  ),
-                ),
-                const SizedBox(width: 12),
-                Expanded(
-                  child: TextField(
-                    controller: _room,
-                    textCapitalization: TextCapitalization.characters,
-                    decoration: const InputDecoration(
-                      labelText: 'Phòng',
-                      hintText: 'BE-301',
-                    ),
-                  ),
-                ),
-              ],
+            TextField(
+              controller: _code,
+              textCapitalization: TextCapitalization.characters,
+              decoration: const InputDecoration(
+                labelText: 'Mã lớp',
+                hintText: 'SE1950',
+              ),
             ),
-            const SizedBox(height: 16),
-            Text('Lịch học', style: text.titleSmall),
-            const SizedBox(height: 8),
+            const SizedBox(height: 12),
+            TextField(
+              controller: _room,
+              textCapitalization: TextCapitalization.characters,
+              decoration: const InputDecoration(
+                labelText: 'Phòng',
+                hintText: 'BE-301',
+              ),
+            ),
+            const SectionLabel('Lịch học'),
             OutlinedButton.icon(
               icon: const Icon(Icons.event_outlined),
               label: Text(
@@ -120,6 +115,7 @@ class _CreateClassViewState extends State<_CreateClassView> {
             const SizedBox(height: 8),
             Wrap(
               spacing: 8,
+              runSpacing: 8,
               children: [
                 for (final e in _weekdayLabels.entries)
                   FilterChip(
@@ -132,6 +128,7 @@ class _CreateClassViewState extends State<_CreateClassView> {
             const SizedBox(height: 8),
             Wrap(
               spacing: 8,
+              runSpacing: 8,
               children: [
                 for (final e in slotTimes.entries)
                   ChoiceChip(
@@ -141,7 +138,7 @@ class _CreateClassViewState extends State<_CreateClassView> {
                   ),
               ],
             ),
-            const SizedBox(height: 16),
+            const SectionLabel('Sinh viên'),
             Text(
               'Sinh viên (${vm.selectedStudents.length} đã chọn)',
               style: text.titleSmall,
@@ -150,11 +147,22 @@ class _CreateClassViewState extends State<_CreateClassView> {
               CheckboxListTile(
                 value: vm.selectedStudents.contains(s.uid),
                 onChanged: (_) => vm.toggleStudent(s.uid),
-                title: Text(s.fullName),
-                subtitle: Text(s.code),
+                title: Text(
+                  s.fullName,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: text.titleSmall,
+                ),
+                subtitle: Text(
+                  s.code,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                ),
+                controlAffinity: ListTileControlAffinity.leading,
                 contentPadding: EdgeInsets.zero,
               ),
           ],
+        ),
         ),
       ),
       bottomNavigationBar: SafeArea(
@@ -170,9 +178,21 @@ class _CreateClassViewState extends State<_CreateClassView> {
                     );
                     if (!context.mounted) return;
                     showResult(context, vm, 'Đã mở lớp và xếp lịch');
-                    if (ok) Navigator.of(context).pop(true);
+                    if (!ok) return;
+                    final newId = vm.createdClassId;
+                    if (newId == null) {
+                      Navigator.of(context).pop(true);
+                      return;
+                    }
+                    await Navigator.of(context).push(
+                      MaterialPageRoute<void>(
+                        builder: (_) => ClassDetailScreen(classId: newId),
+                      ),
+                    );
+                    if (!context.mounted) return;
+                    Navigator.of(context).pop(true);
                   },
-            child: const Text('Mở lớp & xếp lịch'),
+            child: Text(vm.busy ? 'Đang mở lớp…' : 'Mở lớp & xếp lịch'),
           ),
         ),
       ),

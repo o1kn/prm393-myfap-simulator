@@ -50,10 +50,11 @@ lib/
 ├── domain/                       attendance_rules, grade_rules, schedule_rules
 ├── viewmodels/                   mỗi màn hình một ViewModel; student/, lecturer/, head/, staff/
 └── views/                        splash, login, home (3 tab), notifications, timetable, applications, class list,
-                                  grade sheet; student/, lecturer/, head/, staff/
+                                  grade sheet; student/, lecturer/, head/, staff/ (chi tiết lớp, quản lý tài khoản)
 firebase/firestore.rules          Phân quyền theo vai trò trên máy chủ
 tool/seed.dart                    Tạo tài khoản + dữ liệu mẫu trên Firebase
-test/                             domain/ (quy tắc), workflow/ (quy trình 4 vai trò), widget/
+tool/probe_rules.dart             Gọi thẳng Firestore REST để kiểm phân quyền trên project thật
+test/                             domain/ (quy tắc), workflow/ (quy trình 4 vai trò), widget/ (màn hình)
 ```
 
 Điều hướng: `Splash → Login → Home` bằng `pushReplacementNamed` (Module 10). Home có 3 tab như myFAP gốc: Trang chủ (lưới
@@ -70,22 +71,25 @@ chức năng theo vai trò), Thông báo, Cá nhân. Firebase Auth tự lưu phi
 | `grades` | `{classId}_{studentId}` | classId, studentId, studentName, studentCode, subjectCode, semester, marks{đầu điểm: điểm}, published |
 | `applications` | tự sinh | studentId, studentName, studentCode, type, content, createdAt, status (`processing`/`approved`/`rejected`), staffNote, processedBy, processedAt |
 | `notifications` | tự sinh | title, content, audience (`all`/`students`/`lecturers`), createdAt, authorName |
+| `userCodes` | mã viết hoa | uid — giữ chỗ mã người dùng để không mở hai tài khoản cùng mã (cán bộ ĐT đọc/tạo) |
 
 Quan hệ: `classes` 1–n `sessions`; `classes` 1–n `grades`; `subjects` 1–n `classes`; `users` n–n `classes` qua `studentIds`.
 `studentIds` được chép sang `sessions` để sinh viên lấy lịch bằng một truy vấn `array-contains`.
 
 Phân quyền (`firebase/firestore.rules`): sinh viên chỉ đọc điểm của mình khi `published == true` và chỉ đọc đơn của mình;
-giảng viên chỉ sửa điểm danh buổi mình dạy và chỉ ghi điểm lớp mình khi bảng điểm ở `draft`/`returned`; trưởng bộ môn chỉ
-thao tác lớp thuộc bộ môn; cán bộ đào tạo mở lớp, xử lý đơn, đăng thông báo.
+giảng viên chỉ sửa điểm danh buổi mình dạy (buổi chưa tới, lớp chưa công bố) và chỉ ghi điểm lớp mình khi bảng điểm ở
+`draft`/`returned`; trưởng bộ môn chỉ thao tác lớp thuộc bộ môn; cán bộ đào tạo mở lớp, thêm/bớt sinh viên của lớp và
+buổi chưa công bố, xử lý đơn, đăng thông báo, mở tài khoản sinh viên/giảng viên kèm giữ chỗ mã trong `userCodes`. Danh mục
+`type` của đơn trong rules khớp đúng danh sách trên màn "Đơn từ"; thông báo chỉ đọc được theo đối tượng nhận.
 
 ## 4. Chức năng theo vai trò
 
 | Vai trò | Chức năng |
 |---|---|
-| Cán bộ quản lý đào tạo | Mở lớp môn + xếp lịch cả kỳ (ngày bắt đầu, thứ, slot, phòng, sinh viên); xử lý đơn từ; đăng thông báo |
+| Cán bộ quản lý đào tạo | Mở lớp môn + xếp lịch cả kỳ (ngày bắt đầu, thứ, slot, phòng, sinh viên); xem chi tiết lớp (sĩ số, lịch, roster) và **ghi danh muộn** sinh viên đã có tài khoản vào các buổi chưa tới; xử lý đơn từ; đăng thông báo; **mở tài khoản sinh viên/giảng viên mới** |
 | Trưởng bộ môn | Phân công giảng viên cho lớp thuộc bộ môn; duyệt bảng điểm: công bố hoặc trả lại kèm lý do |
-| Giảng viên | Lịch dạy theo tuần; điểm danh từng buổi; nhập điểm thành phần, lưu nháp, gửi duyệt |
-| Sinh viên | Lịch học tuần kèm trạng thái điểm danh; báo cáo điểm danh (% vắng); điểm học kỳ; bảng điểm; gửi và theo dõi đơn |
+| Giảng viên | Lịch dạy theo tuần; điểm danh từng buổi (chỉ buổi chưa tới, lớp chưa công bố); nhập điểm thành phần, lưu nháp, gửi duyệt; cảnh báo khi rời màn hình còn thay đổi chưa lưu |
+| Sinh viên | Lịch học tuần kèm trạng thái điểm danh; báo cáo điểm danh toàn bộ môn (% vắng, số buổi còn lại trước ngưỡng 20%); điểm học kỳ; bảng điểm → mở thẳng điểm học kỳ và điểm danh của môn đó; gửi và theo dõi đơn |
 
 ## 5. Quy tắc nghiệp vụ
 
@@ -99,7 +103,12 @@ thao tác lớp thuộc bộ môn; cán bộ đào tạo mở lớp, xử lý đ
 | Sinh viên chỉ thấy điểm đã công bố | `grade_repository.dart` + Firestore rules |
 | Trưởng BM chỉ phân công GV cùng bộ môn | `academic_repository.dart` |
 | Mở lớp: mã lớp dạng `SE1943`, không trùng mã trong kỳ, không trùng phòng + slot + ngày | `staff/create_class_view_model.dart`, `domain/schedule_rules.dart` |
-| Đơn: nội dung ≥ 10 ký tự; từ chối phải có lý do; đơn đã xử lý không xử lý lại (transaction) | `application_repository.dart` |
+| Đơn: nội dung ≥ 10 ký tự (≤ 2000); từ chối phải có lý do (≤ 1000); đơn đã xử lý không xử lý lại (transaction) | `application_repository.dart` |
+| Ghi danh muộn: chỉ buổi chưa tới (`!date.isBefore(today)`) và chưa điểm danh, đọc lại trạng thái lớp trong transaction; buổi đã qua/đã điểm danh giữ nguyên (không bịa điểm danh quá khứ) | `academic_repository.dart::enrollExistingStudent` |
+| Mã sinh viên/giảng viên giữ chỗ toàn cục trong `userCodes`, hồ sơ + giữ chỗ ghi trong một transaction | `user_repository.dart`, `viewmodels/staff/staff_accounts_view_model.dart` |
+| Rời màn hình nhập điểm / điểm danh khi còn thay đổi chưa lưu → hỏi Lưu / Bỏ / Ở lại; lưu lỗi thì giữ nguyên thay đổi | `grade_sheet_view_model.dart`, `take_attendance_view_model.dart` |
+| Truy vấn buổi học của giảng viên phải lọc theo `classId` **và** `lecturerId`: Firestore chỉ cho truy vấn khi rules chứng minh được bằng chính bộ lọc, lọc mỗi `classId` thì nhánh `lecturerId == uid` bị từ chối | `academic_repository.dart::sessionsOfLecturerInClass` |
+| Thông báo chỉ hiện theo đối tượng nhận (`all` / `students` / `lecturers`) | `notification_repository.dart` + Firestore rules |
 
 ## 6. System test case (kịch bản demo)
 
@@ -142,10 +151,26 @@ Chạy `dart run tool/seed.dart` ngay trước khi demo: lịch PRM393 có một
 | HE170004 | 6 / 5 / 7 / 3.5 → 4.5 (TC14) | 5.7 | Passed |
 | HE170005 | 5 / 4 / 5 / 5 | 4.8 | Not passed – TB dưới 5 |
 
+### Chạy thật bổ sung (30/09/2026)
+
+Bốn chức năng thêm sau buổi chạy TC01–TC21 — chi tiết lớp + ghi danh muộn, quản lý tài khoản, cảnh báo chưa lưu, báo cáo
+điểm danh theo môn — được chạy trên **cùng APK release + Firebase thật**:
+
+| ID | Tài khoản | Các bước | Kết quả mong đợi | Ảnh |
+|---|---|---|---|---|
+| TC22 | daotao@myfap.vn | Lớp môn & lịch học → chạm lớp PRM393 | Chi tiết lớp: môn/kỳ/bộ môn/GV, sĩ số 5, 20 buổi kèm trạng thái điểm danh, danh sách sinh viên | [chi tiết](docs/demo/tc22_chi_tiet_lop.png), [roster](docs/demo/tc22_roster_ghi_danh.png) |
+| TC23 | daotao@myfap.vn | Mở lớp AIL303m (đã công bố) | Nút "Thêm sinh viên" bị khoá, ghi rõ "Lớp đã công bố, không thể thêm sinh viên." | [tc23](docs/demo/tc23_lop_da_cong_bo.png) |
+| TC24 | daotao@myfap.vn → he170005@myfap.vn | SWD392 → Thêm sinh viên → chọn Vũ Đức Huy (HE170005) → mở lại lịch tuần | Ghi danh 19 buổi sắp tới (buổi đã qua giữ nguyên); Firestore: `classes` + 19 buổi có uid mới, buổi 1 (29/09) **không** đổi; SV thấy SWD392 - SE1944 kèm "Chưa diễn ra" | [chọn SV](docs/demo/tc24_chon_sinh_vien.png), [roster 5 SV](docs/demo/tc22_roster_ghi_danh.png), [SV](docs/demo/tc03_sv_thay_lich.png) |
+| TC25 | daotao@myfap.vn | Quản lý tài khoản → Tạo tài khoản: HE170001 (trùng mã) → đổi mã HE179999 → tạo; sau đó đăng nhập bằng tài khoản mới | Trùng mã: "Mã HE170001 đã tồn tại"; tạo xong: "Đã tạo tài khoản", phiên cán bộ ĐT không đổi; tài khoản mới đăng nhập vào thẳng Trang chủ | [danh sách](docs/demo/tc25_quan_ly_tai_khoan.png), [form](docs/demo/tc25_form_tao_tai_khoan.png), [trùng mã](docs/demo/tc25_trung_ma.png), [đã tạo](docs/demo/tc25_da_tao.png) |
+| TC26 | sonnt@myfap.vn | Nhập điểm → PRM393 → nhập 8 cho HE170001 → back | Banner "Chưa lưu thay đổi", hộp thoại "Còn thay đổi chưa lưu" (Ở lại / Bỏ thay đổi / Lưu); chọn Lưu → "Đã lưu nháp" và về danh sách lớp | [chưa lưu](docs/demo/tc26_chua_luu.png), [hộp thoại](docs/demo/tc26_hoi_bo_thay_doi.png), [đã lưu](docs/demo/tc26_da_luu_nhap.png) |
+| TC27 | hunglv@myfap.vn | Lịch dạy & điểm danh → buổi AIL303m hôm nay | "Lớp đã công bố: điểm danh chỉ xem, không thể sửa", không có công tắc và nút lưu | [tc27](docs/demo/tc27_diem_danh_lop_cong_bo.png) |
+| TC28 | he170002@myfap.vn | Bảng điểm → chạm môn PRN212 → "Xem điểm danh môn này" | Mở thẳng Điểm học kỳ của PRN212 (TB 7.2, Passed) rồi Điểm danh của đúng môn đó; phần Tổng quan liệt kê mọi môn kèm "Vắng x/y" và "còn N buổi được phép vắng thêm" | [tổng quan](docs/demo/tc28_diem_danh_tong_quan.png), [bảng điểm](docs/demo/tc28_bang_diem.png), [điểm học kỳ](docs/demo/tc28_diem_hoc_ky.png), [điểm danh môn](docs/demo/tc28_diem_danh_theo_mon.png), [lịch dạy GV](docs/demo/tc28_lich_day_tuan.png) |
+
 Mở lại app sau khi đã đăng nhập thì vào thẳng Trang chủ (Firebase Auth giữ phiên): [ảnh](docs/demo/gv_trang_chu_tu_dang_nhap.png).
 
-Test tự động: `test/workflow/business_process_test.dart` (mở lớp → phân công → điểm danh → nhập điểm → trả lại → công bố
-→ SV xem; đơn từ), `test/domain/rules_test.dart`, `test/widget/` (điểm danh, form gửi đơn).
+Test tự động (26 test): `test/workflow/business_process_test.dart` (mở lớp → phân công → điểm danh → nhập điểm → trả lại →
+công bố → SV xem; đơn từ), `test/domain/rules_test.dart`, `test/widget/` (điểm danh, form gửi đơn, còn thay đổi chưa lưu,
+thông báo theo đối tượng nhận, dựng màn bảng điểm và lịch tuần).
 
 ### Kiểm tra phân quyền trên Firebase thật
 
@@ -158,8 +183,41 @@ Gọi thẳng Firestore REST bằng ID token của từng tài khoản (bỏ qua
 | SV tự đổi `role` thành `staff` | Chặn (403) |
 | SV gửi đơn đứng tên SV khác / đọc đơn của SV khác / đăng thông báo | Chặn (403) |
 | GV điểm danh lớp mình không dạy / sửa điểm lớp đã công bố | Chặn (403) |
+| GV dời điểm đã công bố của lớp khác sang lớp mình (đổi `classId`, `published:false`) / GV đổi `classId` điểm | Chặn (403), doc nạn nhân không đổi |
+| GV tạo điểm ở lớp người khác / tự đặt `published:true` | Chặn (403) |
+| GV tạo và sửa điểm ở lớp mình đang `draft` | Cho phép (200) |
 | Trưởng BM AI trả lại bảng điểm lớp bộ môn SE | Chặn (403) |
 | Cán bộ ĐT xử lý lại đơn đã duyệt | Chặn (403) |
+| Cán bộ ĐT ghi danh muộn vào lớp `draft` + buổi chưa tới | Cho phép (200) |
+| Cán bộ ĐT ghi danh vào lớp đã công bố / đổi danh sách sinh viên của buổi lớp đã công bố | Chặn (403) |
+| Cán bộ ĐT ghi điểm danh (ngoài quyền) | Chặn (403) |
+| Cán bộ ĐT thay danh sách sinh viên vừa thêm vừa bớt (đổi roster) | Chặn (403); chỉ thêm hoặc chỉ bớt thì cho phép |
+| GV lưu điểm danh cho người không có trong buổi | Chặn (403) |
+| GV ghi điểm danh lớp đã công bố / ghi trạng thái ngoài `present`/`absent` | Chặn (403) |
+| Cán bộ ĐT mở hồ sơ sinh viên/giảng viên + giữ chỗ mã mới | Cho phép (200) |
+| Cán bộ ĐT mở hồ sơ vai trò `staff` / đặt chỗ lại mã đã có / GV đọc hoặc tạo hồ sơ người dùng | Chặn (403) |
+| SV đọc thông báo cho giảng viên / SV đăng thông báo | Chặn (403) |
+| SV gửi đơn ngoài danh mục trên màn "Đơn từ" | Chặn (403) |
+| GV truy vấn buổi học chỉ theo `classId` (thiếu `lecturerId`) | Chặn (403) — app phải lọc thêm `lecturerId` |
+| GV / trưởng BM / cán bộ ĐT truy vấn buổi học của một lớp | Cho phép (200) |
+| SV truy vấn buổi học theo `classId` (không phải buổi của mình) | Chặn (403); truy vấn `array-contains` uid của mình thì cho phép (200) |
+
+Regression: `dart run tool/probe_rules.dart` chạy lại 40 thao tác ở trên trên Firebase thật (mã thoát 1 nếu sai), tự dọn
+mọi doc thử bằng token quản trị nên dữ liệu seed không đổi. Rule `grades` tách `create` / `update`; `update` xét quyền
+theo `resource.data.classId` (lớp hiện có của bản ghi) và khoá `classId`, `studentId` không đổi.
+
+Giới hạn đã biết: rules không kiểm tra được cán bộ ĐT có thêm sinh viên vào **đúng buổi chưa tới** hay không (ngày buổi học
+lưu dạng chuỗi `yyyy-MM-dd`, không so được với giờ máy chủ). Phía máy chủ chỉ chặn đổi roster của lớp/buổi đã công bố; phần
+"chỉ buổi chưa tới" do app thực hiện (`academic_repository.dart::enrollExistingStudent`) và được kiểm bằng test + probe.
+
+### Lỗi tìm thấy khi chạy thật và cách sửa
+
+Hai lỗi chỉ lộ ra trên máy thật (test giả lập không thấy), đã sửa và khoá lại bằng test/probe:
+
+| Lỗi | Nguyên nhân | Sửa |
+|---|---|---|
+| Bảng điểm trắng trơn, `Null check operator used on a null value` ở `GradeSheetViewModel.completeCount` | Truy vấn buổi học của giảng viên (`where classId`) bị rules từ chối → `sessions`/`marks` không tải, màn hình vẫn dựng | Thêm `sessionsOfLecturerInClass` (lọc thêm `lecturerId`), đọc điểm/buổi an toàn khi thiếu dữ liệu; probe kiểm luôn nhánh truy vấn |
+| Lịch tuần trắng phần danh sách buổi (cả SV và GV) | `Row(crossAxisAlignment: stretch)` trong `ListView` → "BoxConstraints forces an infinite height", thẻ không dựng được | Bọc `IntrinsicHeight` cho `Row` của thẻ buổi học; test `timetable_render_test.dart` giữ lỗi không quay lại |
 
 ## 7. Cài đặt và chạy
 

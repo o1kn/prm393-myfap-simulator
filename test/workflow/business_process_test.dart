@@ -181,7 +181,8 @@ void main() {
 
       // 3. Giảng viên nhập điểm: gửi khi còn thiếu điểm bị từ chối.
       course = await academic.classById(course.id);
-      final sheet = GradeSheetViewModel(academic, grades, users, course);
+      final sheet = GradeSheetViewModel(
+        academic, grades, users, course, lecturer);
       await sheet.load();
       expect(sheet.setMark(an.uid, 'Assignment', '11'), isNotNull);
       // Ô lỗi chặn cả lưu nháp: không ghi gì xuống Firestore.
@@ -207,7 +208,8 @@ void main() {
       expect(before.rows.single.result.status, CourseStatus.studying);
 
       // 4. Trưởng BM trả lại → GV sửa được lại → gửi lại → công bố.
-      final review = GradeSheetViewModel(academic, grades, users, course);
+      final review = GradeSheetViewModel(
+        academic, grades, users, course, head);
       await review.load();
       expect(await review.returnToLecturer(''), isFalse);
       expect(await review.returnToLecturer('Kiểm tra lại điểm Hà'), isTrue);

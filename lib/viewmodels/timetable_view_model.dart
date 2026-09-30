@@ -15,9 +15,7 @@ class TimetableViewModel extends BaseViewModel {
 
   List<ClassSession> _sessions = const [];
   DateTime _week;
-
-  DateTime get weekStart => _week;
-  DateTime get weekEnd => DateTime(_week.year, _week.month, _week.day + 6);
+  int _selectedWeekday = 1; // 1..7 theo DateTime.weekday.
 
   bool get isStudent => user.role == UserRole.student;
 
@@ -25,9 +23,33 @@ class TimetableViewModel extends BaseViewModel {
     _sessions = isStudent
         ? await _repo.sessionsOfStudent(user.uid)
         : await _repo.sessionsOfLecturer(user.uid);
+    _snapToToday();
   });
 
-  /// 7 ngày của tuần đang xem, mỗi ngày kèm các buổi học đã sắp theo slot.
+  DateTime get weekStart => _week;
+  DateTime get weekEnd => DateTime(_week.year, _week.month, _week.day + 6);
+
+  /// Ngày đang chọn trong thanh ngày ở đầu màn hình.
+  DateTime get selectedDay => DateTime(
+    _week.year,
+    _week.month,
+    _week.day + _selectedWeekday - 1,
+  );
+
+  List<ClassSession> get sessionsOfSelectedDay => _sessions
+      .where((s) => s.date == selectedDay)
+      .toList()
+    ..sort((a, b) => a.slot.compareTo(b.slot));
+
+  bool hasSessionsOn(DateTime day) =>
+      _sessions.any((s) => s.date == day);
+
+  void selectDay(int weekday) {
+    _selectedWeekday = weekday;
+    notify();
+  }
+
+  /// Lịch của tuần (dùng cho thanh ngày ở đầu màn hình).
   List<(DateTime, List<ClassSession>)> get days => [
     for (var i = 0; i < 7; i++)
       (
@@ -45,11 +67,19 @@ class TimetableViewModel extends BaseViewModel {
 
   void currentWeek() {
     _week = mondayOf(DateTime.now());
+    _snapToToday();
     notify();
   }
 
   void _moveWeek(int days) {
     _week = DateTime(_week.year, _week.month, _week.day + days);
+    _snapToToday();
     notify();
+  }
+
+  /// Sang tuần khác thì chọn lại Thứ 2; về tuần hiện tại thì chọn hôm nay.
+  void _snapToToday() {
+    final monday = mondayOf(DateTime.now());
+    _selectedWeekday = _week == monday ? DateTime.now().weekday : 1;
   }
 }

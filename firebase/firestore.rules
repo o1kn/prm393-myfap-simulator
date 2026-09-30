@@ -2,6 +2,10 @@ rules_version = '2';
 
 // Phân quyền theo vai trò lưu ở users/{uid}.role:
 // staff (cán bộ đào tạo), head (trưởng bộ môn), lecturer (giảng viên), student.
+//
+// Nguyên tắc: mọi truy cập đều cần hồ sơ users/{uid} tồn tại (chặn tài khoản
+// Auth tự ký "ma"); đọc theo phạm vi (lớp của mình / bộ môn của mình); ghi
+// luôn giới hạn đúng trường hợp trạng thái mới được đổi.
 service cloud.firestore {
   match /databases/{database}/documents {
 
@@ -11,77 +15,205 @@ service cloud.firestore {
     function isStaff() { return signedIn() && role() == 'staff'; }
     function isHead() { return signedIn() && role() == 'head'; }
     function isLecturer() { return signedIn() && role() == 'lecturer'; }
+    function isStudent() { return signedIn() && role() == 'student'; }
+    // Đã đăng nhập VÀ có hồ sơ: seed luôn tạo hồ sơ cho tài khoản thật.
+    function isMember() {
+      return signedIn()
+        && exists(/databases/$(database)/documents/users/$(request.auth.uid));
+    }
     function classOf(id) { return get(/databases/$(database)/documents/classes/$(id)).data; }
     function onlyChanges(fields) {
       return request.resource.data.diff(resource.data).affectedKeys().hasOnly(fields);
     }
 
-    // Hồ sơ: ai đăng nhập cũng đọc được (để hiện tên); chỉ tạo bằng tool/seed.dart.
+    // Hồ sơ: người trong hệ thống đọc; sinh viên chỉ đọc hồ sơ của mình,
+    // cán bộ đào tạo tạo hồ sơ khi mở tài khoản mới (không đụng staff/head).
     match /users/{uid} {
-      allow read: if signedIn();
-      allow write: if false;
+      allow read: if isStaff() || isHead() || isLecturer()
+        || (signedIn() && request.auth.uid == uid);
+      allow create: if isStaff()
+        && request.resource.data.keys().hasOnly(['role', 'fullName', 'code', 'email', 'department'])
+        && request.resource.data.role in ['student', 'lecturer']
+        && request.resource.data.fullName is string
+        && request.resource.data.fullName.size() >= 2
+        && request.resource.data.code is string
+        && request.resource.data.code.size() >= 3
+        && request.resource.data.email is string
+        && request.resource.data.department is string;
+      allow update, delete: if false;
+    }
+
+    // Giữ mã người dùng toàn cục không trùng (khi staff mở tài khoản mới).
+    match /userCodes/{code} {
+      allow read: if isStaff();
+      allow create: if isStaff()
+        && request.resource.data.keys().hasOnly(['uid'])
+        && request.resource.data.uid is string;
+      allow update, delete: if false;
     }
 
     match /subjects/{code} {
-      allow read: if signedIn();
-      allow write: if isStaff();
+      allow read: if isMember();
+      allow create: if isStaff()
+        && request.resource.data.keys().hasOnly(
+          ['name', 'code', 'credit', 'department', 'components', 'totalSessions'])
+        && request.resource.data.credit is number
+        && request.resource.data.totalSessions is number;
+      allow update: if isStaff() && onlyChanges(['name']);
+      allow delete: if false;
     }
 
     // Lớp môn: cán bộ đào tạo tạo; trưởng bộ môn phân công GV, duyệt điểm;
-    // giảng viên đổi trạng thái khi gửi duyệt.
+    // giảng viên đổi trạng thái khi gửi duyệt; cán bộ đào tạo thêm bớt sinh viên.
     match /classes/{id} {
-      allow read: if signedIn();
-      allow create: if isStaff();
+      allow read: if isStaff()
+        || (isHead() && resource.data.department == me().department)
+        || (isLecturer() && resource.data.lecturerId == request.auth.uid)
+        || (isMember() && request.auth.uid in resource.data.studentIds);
+      allow create: if isStaff()
+        && request.resource.data.keys().hasOnly(['code', 'subjectCode', 'subjectName',
+            'semester', 'department', 'studentIds', 'lecturerId', 'lecturerName',
+            'gradeStatus', 'headNote'])
+        && request.resource.data.gradeStatus == 'draft'
+        && request.resource.data.headNote == ''
+        && request.resource.data.lecturerId == null
+        && request.resource.data.studentIds is list
+        && request.resource.data.studentIds.size() <= 200;
       allow update: if
-        (isHead() && resource.data.department == me().department
-          && onlyChanges(['lecturerId', 'lecturerName', 'gradeStatus', 'headNote']))
+        // Cán bộ đào tạo: thêm sinh viên vào lớp (buổi tới do repo đồng bộ).
+        (isStaff() && onlyChanges(['studentIds'])
+          && resource.data.gradeStatus in ['draft', 'returned']
+          && request.resource.data.studentIds.size() <= 200
+          && (request.resource.data.studentIds.hasAll(resource.data.studentIds)
+            || resource.data.studentIds.hasAll(request.resource.data.studentIds)))
+        // Trưởng bộ môn: phân công GV (đúng bộ môn, GV đúng bộ môn).
+        || (isHead() && resource.data.department == me().department
+          && onlyChanges(['lecturerId', 'lecturerName'])
+          && (request.resource.data.lecturerId == null
+            || (request.resource.data.lecturerId != null
+              && get(/databases/$(database)/documents/users/$(request.resource.data.lecturerId)).data.role == 'lecturer'
+              && get(/databases/$(database)/documents/users/$(request.resource.data.lecturerId)).data.department == me().department)))
+        // Trưởng bộ môn: duyệt / trả lại bảng điểm đã gửi.
+        || (isHead() && resource.data.department == me().department
+          && resource.data.gradeStatus == 'submitted'
+          && request.resource.data.gradeStatus in ['published', 'returned']
+          && onlyChanges(['gradeStatus', 'headNote'])
+          && request.resource.data.headNote.size() <= 1000)
+        // Giảng viên gửi duyệt (trả lại headNote rỗng).
         || (isLecturer() && resource.data.lecturerId == request.auth.uid
           && resource.data.gradeStatus in ['draft', 'returned']
           && request.resource.data.gradeStatus == 'submitted'
+          && request.resource.data.headNote == ''
           && onlyChanges(['gradeStatus', 'headNote']));
+      allow delete: if false;
     }
 
-    // Buổi học: giảng viên của buổi chỉ được sửa điểm danh.
+    // Buổi học: giảng viên của lớp (theo lớp, không theo bản sao trong buổi)
+    // sửa điểm danh cho lớp chưa công bố; giá trị phải nằm trong tập hợp.
     match /sessions/{id} {
-      allow read: if signedIn();
-      allow create: if isStaff();
+      allow read: if isStaff()
+        || (isHead() && classOf(resource.data.classId).department == me().department)
+        || (isLecturer() && resource.data.lecturerId == request.auth.uid)
+        || (isMember() && request.auth.uid in resource.data.studentIds);
+      allow create: if isStaff()
+        && request.resource.data.keys().hasOnly(['classId', 'classCode', 'subjectCode',
+            'date', 'slot', 'room', 'sessionNo', 'studentIds', 'lecturerId',
+            'lecturerName', 'attendance'])
+        && request.resource.data.attendance.keys().size() == 0;
       allow update: if
-        (isLecturer() && resource.data.lecturerId == request.auth.uid
-          && onlyChanges(['attendance']))
+        (isLecturer()
+          && classOf(resource.data.classId).lecturerId == request.auth.uid
+          && classOf(resource.data.classId).gradeStatus != 'published'
+          && onlyChanges(['attendance'])
+          && request.resource.data.attendance.keys().hasOnly(resource.data.studentIds)
+          && request.resource.data.attendance.values().hasOnly(['present', 'absent']))
         || (isHead() && classOf(resource.data.classId).department == me().department
-          && onlyChanges(['lecturerId', 'lecturerName']));
+          && onlyChanges(['lecturerId', 'lecturerName']))
+        || (isStaff() && onlyChanges(['studentIds'])
+          && (request.resource.data.studentIds.hasAll(resource.data.studentIds)
+            || resource.data.studentIds.hasAll(request.resource.data.studentIds))
+          && request.resource.data.studentIds.size() <= 200
+          && classOf(resource.data.classId).gradeStatus != 'published');
     }
 
     // Điểm: sinh viên chỉ đọc điểm của mình đã công bố.
     match /grades/{id} {
-      allow read: if (signedIn() && resource.data.studentId == request.auth.uid
+      allow read: if (isMember() && resource.data.studentId == request.auth.uid
                         && resource.data.published == true)
-                  || isLecturer() || isHead() || isStaff();
-      allow create, update: if
-        (isLecturer() && classOf(request.resource.data.classId).lecturerId == request.auth.uid
+                  || isStaff()
+                  || (isLecturer() && classOf(resource.data.classId).lecturerId == request.auth.uid)
+                  || (isHead() && classOf(resource.data.classId).department == me().department);
+      // Create: đúng lớp của GV, lớp còn mở (draft/returned), chưa công bố,
+      // sinh viên có trong danh sách lớp.
+      allow create: if
+        isLecturer()
+          && classOf(request.resource.data.classId).lecturerId == request.auth.uid
           && classOf(request.resource.data.classId).gradeStatus in ['draft', 'returned']
-          && request.resource.data.published == false)
+          && request.resource.data.published == false
+          && request.resource.data.studentId in classOf(request.resource.data.classId).studentIds
+          && request.resource.data.keys().hasOnly(['classId', 'studentId', 'studentName',
+              'studentCode', 'subjectCode', 'semester', 'marks', 'published'])
+          && request.resource.data.marks is map
+          && request.resource.data.marks.size() <= 10;
+      // Update: khoá đè lớp/sinh viên của bản ghi (chống dời điểm sang lớp
+      // khác) rồi mới xét quyền theo lớp của chính bản ghi.
+      allow update: if
+        (isLecturer()
+          && request.resource.data.classId == resource.data.classId
+          && request.resource.data.studentId == resource.data.studentId
+          && classOf(resource.data.classId).lecturerId == request.auth.uid
+          && classOf(resource.data.classId).gradeStatus in ['draft', 'returned']
+          && request.resource.data.published == false
+          && onlyChanges(['marks'])
+          && request.resource.data.marks is map
+          && request.resource.data.marks.size() <= 10)
         || (isHead() && classOf(resource.data.classId).department == me().department
           // Trong batch công bố, get() đọc trạng thái lớp trước khi ghi (submitted).
           && classOf(resource.data.classId).gradeStatus == 'submitted'
           && request.resource.data.published == true
           && onlyChanges(['published']));
+      allow delete: if false;
     }
 
     // Đơn từ: sinh viên gửi đơn của mình; cán bộ đào tạo xử lý.
     match /applications/{id} {
       allow read: if isStaff()
-                  || (signedIn() && resource.data.studentId == request.auth.uid);
-      allow create: if signedIn() && role() == 'student'
+                  || (isMember() && resource.data.studentId == request.auth.uid);
+      allow create: if isStudent()
                     && request.resource.data.studentId == request.auth.uid
-                    && request.resource.data.status == 'processing';
+                    && request.resource.data.status == 'processing'
+                    && request.resource.data.studentName == me().fullName
+                    && request.resource.data.studentCode == me().code
+                    && request.resource.data.type in ['Xin chuyển lớp học', 'Xin tạm nghỉ một học kỳ',
+                      'Xác nhận sinh viên', 'Xác nhận sinh viên để hoãn nghĩa vụ quân sự',
+                      'Xác nhận vay vốn ngân hàng', 'Hủy đăng ký học lại',
+                      'Các loại đơn khác']
+                    && request.resource.data.content is string
+                    && request.resource.data.content.size() >= 10
+                    && request.resource.data.content.size() <= 2000
+                    && request.resource.data.staffNote == ''
+                    && request.resource.data.processedBy == '';
       allow update: if isStaff() && resource.data.status == 'processing'
-                    && onlyChanges(['status', 'staffNote', 'processedBy', 'processedAt']);
+                    && request.resource.data.status in ['approved', 'rejected']
+                    && request.resource.data.processedBy == me().fullName
+                    && onlyChanges(['status', 'staffNote', 'processedBy', 'processedAt'])
+                    && request.resource.data.staffNote.size() <= 1000;
     }
 
     match /notifications/{id} {
-      allow read: if signedIn();
-      allow create: if isStaff();
+      allow read: if isMember()
+        && (role() == 'staff'
+          || resource.data.audience == 'all'
+          || (resource.data.audience == 'students' && isStudent())
+          || (resource.data.audience == 'lecturers' && (isLecturer() || isHead())));
+      allow create: if isStaff()
+        && request.resource.data.keys().hasOnly(['title', 'content', 'audience', 'createdAt', 'authorName'])
+        && request.resource.data.audience in ['all', 'students', 'lecturers']
+        && request.resource.data.authorName == me().fullName
+        && request.resource.data.title is string
+        && request.resource.data.title.size() >= 3
+        && request.resource.data.title.size() <= 200
+        && request.resource.data.content.size() <= 2000;
     }
   }
 }

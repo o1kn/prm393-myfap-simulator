@@ -145,7 +145,7 @@ class InfoRow extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           SizedBox(
-            width: 120,
+            width: 140,
             child: Text(
               label,
               style: text.bodyMedium?.copyWith(
@@ -155,6 +155,116 @@ class InfoRow extends StatelessWidget {
           ),
           Expanded(child: Text(value, style: text.bodyMedium)),
         ],
+      ),
+    );
+  }
+}
+
+/// Giới hạn bề rộng nội dung và căn giữa: máy tính bảng / màn xoay ngang
+/// không bị kéo giãn, điện thoại nhỏ vẫn dùng đủ chiều ngang.
+class ContentWidth extends StatelessWidget {
+  const ContentWidth({super.key, required this.child});
+
+  final Widget child;
+
+  @override
+  Widget build(BuildContext context) => Align(
+    alignment: Alignment.topCenter,
+    child: ConstrainedBox(
+      constraints: const BoxConstraints(maxWidth: 640),
+      child: child,
+    ),
+  );
+}
+
+/// Nhãn nhóm viết hoa nhỏ đặt phía trên một cụm nội dung.
+class SectionLabel extends StatelessWidget {
+  const SectionLabel(this.text, {super.key});
+
+  final String text;
+
+  @override
+  Widget build(BuildContext context) => Padding(
+    padding: const EdgeInsets.only(top: 24, bottom: 10),
+    child: Text(
+      text.toUpperCase(),
+      style: Theme.of(context).textTheme.labelMedium?.copyWith(
+        color: Theme.of(context).colorScheme.onSurfaceVariant,
+        letterSpacing: 1,
+        fontWeight: FontWeight.w700,
+      ),
+    ),
+  );
+}
+
+/// Khung navy bo tròn phía dưới, nối liền thanh tiêu đề. Chứa phần tóm tắt
+/// của màn hình (lời chào, kết quả, cảnh báo). [underStatusBar] chừa chỗ cho
+/// thanh trạng thái khi màn hình không có AppBar.
+class HeroHeader extends StatelessWidget {
+  const HeroHeader({super.key, required this.child, this.underStatusBar = false});
+
+  final Widget child;
+  final bool underStatusBar;
+
+  @override
+  Widget build(BuildContext context) {
+    final top = underStatusBar ? MediaQuery.paddingOf(context).top : 0.0;
+    return Container(
+      width: double.infinity,
+      padding: EdgeInsets.fromLTRB(20, top + 12, 20, 24),
+      decoration: const BoxDecoration(
+        color: fapNavy,
+        borderRadius: BorderRadius.vertical(bottom: Radius.circular(28)),
+      ),
+      child: child,
+    );
+  }
+}
+
+/// Ô số liệu lớn: con số nổi bật + nhãn. [highlight] tô cam khi cần chú ý.
+class StatTile extends StatelessWidget {
+  const StatTile({
+    super.key,
+    required this.value,
+    required this.label,
+    this.highlight = false,
+  });
+
+  final String value;
+  final String label;
+  final bool highlight;
+
+  @override
+  Widget build(BuildContext context) {
+    final scheme = Theme.of(context).colorScheme;
+    final fg = highlight ? scheme.onPrimary : scheme.onSurface;
+    return Card(
+      color: highlight ? scheme.primary : null,
+      child: Padding(
+        padding: const EdgeInsets.all(16),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Text(
+              value,
+              style: Theme.of(context).textTheme.headlineMedium?.copyWith(
+                color: fg,
+                fontWeight: FontWeight.w800,
+                height: 1.1,
+              ),
+            ),
+            const SizedBox(height: 4),
+            Text(
+              label,
+              maxLines: 2,
+              overflow: TextOverflow.ellipsis,
+              style: Theme.of(context).textTheme.labelLarge?.copyWith(
+                color: highlight ? scheme.onPrimary : scheme.onSurfaceVariant,
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }

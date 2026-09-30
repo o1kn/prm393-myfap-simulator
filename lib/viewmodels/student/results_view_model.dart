@@ -26,12 +26,15 @@ class CourseResultRow {
 }
 
 /// Dữ liệu chung cho Grade report (theo từng lớp) và Academic transcript.
+/// [initialClassId] preselect lớp khi mở từ Bảng điểm, giữ nguyên khi refresh.
 class ResultsViewModel extends BaseViewModel {
-  ResultsViewModel(this._academic, this._grades, this.student);
+  ResultsViewModel(this._academic, this._grades, this.student,
+      {this.initialClassId});
 
   final AcademicRepository _academic;
   final GradeRepository _grades;
   final AppUser student;
+  final String? initialClassId;
 
   List<CourseResultRow> rows = const [];
   String? selectedClassId;
@@ -62,7 +65,16 @@ class ResultsViewModel extends BaseViewModel {
             ),
           ),
     ];
-    selectedClassId ??= rows.isEmpty ? null : rows.first.course.id;
+    if (rows.isEmpty) {
+      selectedClassId = null;
+    } else if (rows.any((r) => r.course.id == selectedClassId)) {
+      // Giữ lựa chọn hiện tại khi refresh.
+    } else if (initialClassId != null &&
+        rows.any((r) => r.course.id == initialClassId)) {
+      selectedClassId = initialClassId;
+    } else {
+      selectedClassId = rows.first.course.id;
+    }
   });
 
   void select(String classId) {

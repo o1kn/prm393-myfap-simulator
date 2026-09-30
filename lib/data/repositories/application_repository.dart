@@ -33,6 +33,9 @@ class ApplicationRepository {
     if (content.trim().length < 10) {
       throw const AppException('Nội dung đơn cần ít nhất 10 ký tự');
     }
+    if (content.trim().length > 2000) {
+      throw const AppException('Nội dung đơn tối đa 2000 ký tự');
+    }
     final ref = _apps.doc();
     await ref.set(
       ApplicationForm(
@@ -57,6 +60,9 @@ class ApplicationRepository {
   }) async {
     if (decision == ApplicationStatus.rejected && note.trim().isEmpty) {
       throw const AppException('Nhập lý do khi từ chối đơn');
+    }
+    if (note.trim().length > 1000) {
+      throw const AppException('Phản hồi tối đa 1000 ký tự');
     }
     final ref = _apps.doc(form.id);
     await _db.runTransaction((tx) async {

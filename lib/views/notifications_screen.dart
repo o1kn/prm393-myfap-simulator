@@ -49,11 +49,13 @@ class _NotificationsView extends StatelessWidget {
           isEmpty: vm.items.isEmpty,
           emptyText: 'Chưa có thông báo',
           onRetry: vm.load,
-          builder: (_) => ListView.separated(
-            padding: const EdgeInsets.fromLTRB(16, 16, 16, 88),
-            itemCount: vm.items.length,
-            separatorBuilder: (_, _) => const SizedBox(height: 8),
-            itemBuilder: (context, i) => _NotificationCard(vm.items[i]),
+          builder: (_) => ContentWidth(
+            child: ListView.separated(
+              padding: const EdgeInsets.fromLTRB(16, 16, 16, 88),
+              itemCount: vm.items.length,
+              separatorBuilder: (_, _) => const SizedBox(height: 8),
+              itemBuilder: (context, i) => _NotificationCard(vm.items[i]),
+            ),
           ),
         ),
       ),
@@ -77,7 +79,8 @@ class _NotificationsView extends StatelessWidget {
             16,
             16 + MediaQuery.viewInsetsOf(sheet).bottom,
           ),
-          child: Column(
+          child: SingleChildScrollView(
+            child: Column(
             mainAxisSize: MainAxisSize.min,
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
@@ -97,13 +100,17 @@ class _NotificationsView extends StatelessWidget {
                 decoration: const InputDecoration(labelText: 'Nội dung'),
               ),
               const SizedBox(height: 12),
-              SegmentedButton<Audience>(
-                segments: [
+              Wrap(
+                spacing: 8,
+                runSpacing: 8,
+                children: [
                   for (final a in Audience.values)
-                    ButtonSegment(value: a, label: Text(a.label)),
+                    ChoiceChip(
+                      label: Text(a.label),
+                      selected: audience == a,
+                      onSelected: (_) => setSheet(() => audience = a),
+                    ),
                 ],
-                selected: {audience},
-                onSelectionChanged: (s) => setSheet(() => audience = s.first),
               ),
               const SizedBox(height: 16),
               if (error != null) ...[
@@ -132,6 +139,7 @@ class _NotificationsView extends StatelessWidget {
               ),
             ],
           ),
+          ),
         ),
       ),
     );
@@ -152,7 +160,21 @@ class _NotificationCard extends StatelessWidget {
     return Card(
       child: ExpansionTile(
         shape: const Border(),
-        title: Text(item.title, style: text.titleSmall),
+        leading: CircleAvatar(
+          backgroundColor: Theme.of(context).colorScheme.primaryContainer,
+          foregroundColor: Theme.of(context).colorScheme.onPrimaryContainer,
+          child: Icon(switch (item.audience) {
+            Audience.all => Icons.campaign_outlined,
+            Audience.students => Icons.school_outlined,
+            Audience.lecturers => Icons.co_present_outlined,
+          }),
+        ),
+        title: Text(
+          item.title,
+          maxLines: 3,
+          overflow: TextOverflow.ellipsis,
+          style: text.titleSmall?.copyWith(fontWeight: FontWeight.w700),
+        ),
         subtitle: Text(
           '${_time.format(item.createdAt)} · ${item.authorName} · '
           '${item.audience.label}',
