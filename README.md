@@ -144,6 +144,8 @@ Test tự động phủ các quy trình trên: `test/workflow/business_process_t
    `firebase deploy --only firestore:rules --project <project-id>`.
    Chạy lại seed về sau: chuyển Rules về test mode, seed, rồi dán lại rules.
 6. Chạy: `flutter run` (Android). Bản release: `flutter build apk --release`.
+   Build Android cần **NDK 28.2.13676358**. Nếu Gradle báo không cài được NDK, mở Android Studio → SDK Manager →
+   SDK Tools → NDK (Side by side) để cài; thư mục SDK `C:\Android\Sdk` cần quyền ghi (chạy Android Studio bằng quyền admin).
 
 ```bash
 flutter pub get

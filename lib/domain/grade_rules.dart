@@ -28,8 +28,8 @@ class CourseResult {
 /// Kiểm tra một điểm nhập tay; trả về thông báo lỗi hoặc null nếu hợp lệ.
 String? validateMark(String input) {
   final value = double.tryParse(input.trim().replaceAll(',', '.'));
-  if (value == null) return 'Nhập số từ 0 đến 10';
-  if (value < 0 || value > 10) return 'Điểm phải trong khoảng 0 – 10';
+  if (value == null) return 'Không phải số';
+  if (value < 0 || value > 10) return 'Chỉ từ 0 đến 10';
   return null;
 }
 

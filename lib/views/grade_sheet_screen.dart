@@ -105,22 +105,26 @@ class _GradeSheetView extends StatelessWidget {
                         style: Theme.of(context).textTheme.titleSmall,
                       ),
                       const SizedBox(height: 8),
-                      Wrap(
-                        spacing: 8,
-                        runSpacing: 8,
-                        children: [
-                          for (final c in vm.subject!.components)
-                            SizedBox(
-                              width: 96,
-                              child: _MarkField(
-                                key: ValueKey('${st.uid}-${c.name}'),
-                                label: c.name,
-                                initial: vm.marks[st.uid]![c.name],
-                                enabled: canEdit,
-                                onChanged: (v) => vm.setMark(st.uid, c.name, v),
+                      // 2 ô điểm mỗi hàng để tên đầu điểm hiện đủ.
+                      LayoutBuilder(
+                        builder: (context, box) => Wrap(
+                          spacing: 8,
+                          runSpacing: 8,
+                          children: [
+                            for (final c in vm.subject!.components)
+                              SizedBox(
+                                width: (box.maxWidth - 8) / 2,
+                                child: _MarkField(
+                                  key: ValueKey('${st.uid}-${c.name}'),
+                                  label: c.name,
+                                  initial: vm.marks[st.uid]![c.name],
+                                  enabled: canEdit,
+                                  onChanged: (v) =>
+                                      vm.setMark(st.uid, c.name, v),
+                                ),
                               ),
-                            ),
-                        ],
+                          ],
+                        ),
                       ),
                       const SizedBox(height: 4),
                       Text(
