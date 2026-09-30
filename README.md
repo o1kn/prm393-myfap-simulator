@@ -112,7 +112,7 @@ buổi chưa công bố, xử lý đơn, đăng thông báo, mở tài khoản s
 
 ## 6. System test case (kịch bản demo)
 
-Đã chạy đủ 21 case ngày 30/09/2026 trên **APK release** (emulator Android 16, API 36) với **Firebase thật**
+Đã chạy đủ 29 case (TC01–TC21 buổi chạy đầu, TC22–TC29 bổ sung bên dưới) ngày 30/09/2026 trên **APK release** (emulator Android 16, API 36) với **Firebase thật**
 (`prm393-myfap-sim`, rules thật). Ảnh chụp trong [`docs/demo/`](docs/demo). Mật khẩu mọi tài khoản: `Myfap@2026`.
 
 Chạy `dart run tool/seed.dart` ngay trước khi demo: lịch PRM393 có một buổi rơi đúng ngày seed.
@@ -154,7 +154,8 @@ Chạy `dart run tool/seed.dart` ngay trước khi demo: lịch PRM393 có một
 ### Chạy thật bổ sung (30/09/2026)
 
 Bốn chức năng thêm sau buổi chạy TC01–TC21 — chi tiết lớp + ghi danh muộn, quản lý tài khoản, cảnh báo chưa lưu, báo cáo
-điểm danh theo môn — được chạy trên **cùng APK release + Firebase thật**:
+điểm danh theo môn (TC22–TC28) — được chạy trên **cùng APK release + Firebase thật**; TC29 là kiểm tra cỡ chữ 2.0 trên màn 320dp
+với bản release build lại sau khi sửa bố cục:
 
 | ID | Tài khoản | Các bước | Kết quả mong đợi | Ảnh |
 |---|---|---|---|---|
@@ -220,7 +221,7 @@ Bốn lỗi chỉ lộ ra trên máy thật hoặc khi đổi cỡ chữ (test t
 | Bảng điểm trắng trơn, `Null check operator used on a null value` ở `GradeSheetViewModel.completeCount` | Truy vấn buổi học của giảng viên (`where classId`) bị rules từ chối → `sessions`/`marks` không tải, màn hình vẫn dựng | Thêm `sessionsOfLecturerInClass` (lọc thêm `lecturerId`), đọc điểm/buổi an toàn khi thiếu dữ liệu; probe kiểm luôn nhánh truy vấn |
 | Lịch tuần trắng phần danh sách buổi (cả SV và GV) | `Row(crossAxisAlignment: stretch)` trong `ListView` → "BoxConstraints forces an infinite height", thẻ không dựng được | Bọc `IntrinsicHeight` cho `Row` của thẻ buổi học; test `timetable_render_test.dart` giữ lỗi không quay lại |
 | Nhãn ô số liệu bị cắt "Buổi học h…" khi cỡ chữ hệ thống 2.0 trên màn nhỏ (chỉ lộ khi đổi cỡ chữ trên máy) | Hai `StatTile` cạnh nhau (mỗi ô ~ nửa chiều ngang) không đủ chỗ cho nhãn dài | Thêm `StatRow`: chữ phóng to từ 1.5 lần thì xếp dọc, còn lại xếp ngang; test kiểm nhãn không bị cắt |
-| Màn Quản lý tài khoản (320dp, chữ 2x) tràn ngang; dòng cuối bị nút "Tạo tài khoản" che | Chip vai trò nằm ở `ListTile.trailing`, dropdown không `isExpanded`, đệm dưới 24 nhỏ hơn chiều cao nút | Chip chuyển xuống `subtitle`, dropdown `isExpanded` + cắt chữ bằng `…`, đệm dưới 88; `small_screen_test.dart` kiểm 13 màn hình không tràn |
+| Màn Quản lý tài khoản (320dp, chữ 2x) tràn ngang; dòng cuối bị nút "Tạo tài khoản" che | Chip vai trò nằm ở `ListTile.trailing`, dropdown không `isExpanded`, đệm dưới 24 nhỏ hơn chiều cao nút | Chip chuyển xuống `subtitle`, dropdown `isExpanded` + cắt chữ bằng `…`, đệm dưới 96 (như màn Lớp môn); `small_screen_test.dart` kiểm 13 màn hình không tràn |
 
 ## 7. Cài đặt và chạy
 
@@ -236,7 +237,7 @@ triển khai). `android/app/google-services.json` đã có trong repo.
 5. Cho thành viên nhóm chạy bước 3–4: Firebase console → Project settings → Users and permissions → Add member.
 
 Build Android cần **NDK 28.2.13676358**. Nếu Gradle báo không cài được NDK, mở Android Studio → SDK Manager → SDK Tools →
-NDK (Side by side) để cài; thư mục SDK `C:\Android\Sdk` cần quyền ghi (chạy Android Studio bằng quyền admin).
+NDK (Side by side) để cài; thư mục SDK cần quyền ghi (máy làm bài này dùng `E:\Android\Sdk`, đặt bằng `flutter config --android-sdk E:\Android\Sdk`).
 
 ```bash
 flutter pub get

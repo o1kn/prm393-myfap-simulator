@@ -102,7 +102,7 @@ class _StaffAccountsViewState extends State<_StaffAccountsView> {
                   onRefresh: vm.load,
                   child: ListView.builder(
                     // Chừa chỗ cho nút "Tạo tài khoản" để dòng cuối không bị che.
-                    padding: const EdgeInsets.fromLTRB(16, 8, 16, 88),
+                    padding: const EdgeInsets.fromLTRB(16, 8, 16, 96),
                     itemCount: vm.filtered.length,
                     itemBuilder: (context, i) {
                       final p = vm.filtered[i];
