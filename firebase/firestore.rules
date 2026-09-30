@@ -1,0 +1,84 @@
+rules_version = '2';
+
+// Phân quyền theo vai trò lưu ở users/{uid}.role:
+// staff (cán bộ đào tạo), head (trưởng bộ môn), lecturer (giảng viên), student.
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    function signedIn() { return request.auth != null; }
+    function me() { return get(/databases/$(database)/documents/users/$(request.auth.uid)).data; }
+    function role() { return me().role; }
+    function isStaff() { return signedIn() && role() == 'staff'; }
+    function isHead() { return signedIn() && role() == 'head'; }
+    function isLecturer() { return signedIn() && role() == 'lecturer'; }
+    function classOf(id) { return get(/databases/$(database)/documents/classes/$(id)).data; }
+    function onlyChanges(fields) {
+      return request.resource.data.diff(resource.data).affectedKeys().hasOnly(fields);
+    }
+
+    // Hồ sơ: ai đăng nhập cũng đọc được (để hiện tên); chỉ tạo bằng tool/seed.dart.
+    match /users/{uid} {
+      allow read: if signedIn();
+      allow write: if false;
+    }
+
+    match /subjects/{code} {
+      allow read: if signedIn();
+      allow write: if isStaff();
+    }
+
+    // Lớp môn: cán bộ đào tạo tạo; trưởng bộ môn phân công GV, duyệt điểm;
+    // giảng viên đổi trạng thái khi gửi duyệt.
+    match /classes/{id} {
+      allow read: if signedIn();
+      allow create: if isStaff();
+      allow update: if
+        (isHead() && resource.data.department == me().department
+          && onlyChanges(['lecturerId', 'lecturerName', 'gradeStatus', 'headNote']))
+        || (isLecturer() && resource.data.lecturerId == request.auth.uid
+          && resource.data.gradeStatus in ['draft', 'returned']
+          && request.resource.data.gradeStatus == 'submitted'
+          && onlyChanges(['gradeStatus', 'headNote']));
+    }
+
+    // Buổi học: giảng viên của buổi chỉ được sửa điểm danh.
+    match /sessions/{id} {
+      allow read: if signedIn();
+      allow create: if isStaff();
+      allow update: if
+        (isLecturer() && resource.data.lecturerId == request.auth.uid
+          && onlyChanges(['attendance']))
+        || (isHead() && classOf(resource.data.classId).department == me().department
+          && onlyChanges(['lecturerId', 'lecturerName']));
+    }
+
+    // Điểm: sinh viên chỉ đọc điểm của mình đã công bố.
+    match /grades/{id} {
+      allow read: if (signedIn() && resource.data.studentId == request.auth.uid
+                        && resource.data.published == true)
+                  || isLecturer() || isHead() || isStaff();
+      allow create, update: if
+        (isLecturer() && classOf(request.resource.data.classId).lecturerId == request.auth.uid
+          && classOf(request.resource.data.classId).gradeStatus in ['draft', 'returned']
+          && request.resource.data.published == false)
+        || (isHead() && classOf(resource.data.classId).department == me().department
+          && onlyChanges(['published']));
+    }
+
+    // Đơn từ: sinh viên gửi đơn của mình; cán bộ đào tạo xử lý.
+    match /applications/{id} {
+      allow read: if isStaff()
+                  || (signedIn() && resource.data.studentId == request.auth.uid);
+      allow create: if signedIn() && role() == 'student'
+                    && request.resource.data.studentId == request.auth.uid
+                    && request.resource.data.status == 'processing';
+      allow update: if isStaff() && resource.data.status == 'processing'
+                    && onlyChanges(['status', 'staffNote', 'processedBy', 'processedAt']);
+    }
+
+    match /notifications/{id} {
+      allow read: if signedIn();
+      allow create: if isStaff();
+    }
+  }
+}
