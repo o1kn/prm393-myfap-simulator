@@ -75,20 +75,24 @@ class _TakeAttendanceView extends StatelessWidget {
                 itemCount: vm.students.length,
                 itemBuilder: (context, i) {
                   final st = vm.students[i];
-                  final absent = vm.marks[st.uid] == AttendanceStatus.absent;
+                  final status = vm.marks[st.uid]!;
+                  final chip = StatusChip.attendance(status);
                   return Card(
                     margin: const EdgeInsets.only(bottom: 8),
-                    child: SwitchListTile(
-                      value: !absent,
-                      onChanged: vm.editable ? (_) => vm.toggle(st.uid) : null,
-                      title: Text(st.fullName),
-                      subtitle: Text(st.code),
-                      secondary: StatusChip.attendance(
-                        absent
-                            ? AttendanceStatus.absent
-                            : AttendanceStatus.present,
-                      ),
-                    ),
+                    // Buổi chưa diễn ra: chỉ hiện trạng thái, không có công tắc.
+                    child: vm.editable
+                        ? SwitchListTile(
+                            value: status != AttendanceStatus.absent,
+                            onChanged: (_) => vm.toggle(st.uid),
+                            title: Text(st.fullName),
+                            subtitle: Text(st.code),
+                            secondary: chip,
+                          )
+                        : ListTile(
+                            title: Text(st.fullName),
+                            subtitle: Text(st.code),
+                            trailing: chip,
+                          ),
                   );
                 },
               ),

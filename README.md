@@ -103,49 +103,79 @@ thao tác lớp thuộc bộ môn; cán bộ đào tạo mở lớp, xử lý đ
 
 ## 6. System test case (kịch bản demo)
 
-Chạy `dart run tool/seed.dart` ngay trước khi demo: lịch PRM393 có một buổi rơi đúng ngày seed. Mật khẩu mọi tài khoản:
-`Myfap@2026`.
+Đã chạy đủ 21 case ngày 30/09/2026 trên **APK release** (emulator Android 16, API 36) với **Firebase thật**
+(`prm393-myfap-sim`, rules thật). Ảnh chụp trong [`docs/demo/`](docs/demo). Mật khẩu mọi tài khoản: `Myfap@2026`.
 
-| ID | Tài khoản | Các bước | Kết quả mong đợi |
+Chạy `dart run tool/seed.dart` ngay trước khi demo: lịch PRM393 có một buổi rơi đúng ngày seed.
+
+| ID | Tài khoản | Các bước | Kết quả mong đợi | Ảnh |
+|---|---|---|---|---|
+| TC01 | daotao@myfap.vn | Đăng nhập với mật khẩu sai | Báo "Sai email hoặc mật khẩu", ở lại màn Login | [tc01](docs/demo/tc01_sai_mat_khau.png) |
+| TC02 | daotao@myfap.vn | Lớp môn & lịch học → Mở lớp: SWD392, mã `SE1950`, phòng `BE-301`, slot 1, T4 | Báo "Phòng BE-301 slot 1 ngày … đã có lớp PRM393 - SE1943", không tạo lớp | [tc02](docs/demo/tc02_trung_phong.png) |
+| TC03 | daotao@myfap.vn | Đổi phòng `BE-305`, slot 3, T2 + T4, chọn HE170005 → Mở lớp | Lớp SE1950 xuất hiện, "Đang nhập điểm", GV "chưa phân công"; HE170005 thấy lịch SWD392 | [lớp](docs/demo/tc03_mo_lop.png), [SV](docs/demo/tc03_sv_thay_lich.png) |
+| TC04 | truongbm.ai@myfap.vn | Phân công giảng viên | Chỉ thấy lớp AIL303m của bộ môn AI | [tc04](docs/demo/tc04_tbm_ai_chi_thay_bo_mon_ai.png) |
+| TC05 | truongbm.se@myfap.vn | Phân công → SWD392 - SE1944 → Ngô Tùng Sơn | "Giảng viên: sonnt5"; lịch dạy của sonnt có SWD392 | [tc05](docs/demo/tc05_phan_cong_gv.png) |
+| TC06 | sonnt@myfap.vn | Lịch dạy & điểm danh → buổi PRM393 hôm nay → tắt HE170002 → Lưu điểm danh | "Đã lưu điểm danh"; buổi có dấu tích | [đánh vắng](docs/demo/tc06_danh_vang.png), [đã lưu](docs/demo/tc06_da_luu_diem_danh.png) |
+| TC07 | he170002@myfap.vn | Lịch học tuần | Buổi PRM393 hôm nay hiện "Vắng" | [tc07](docs/demo/tc07_sv_thay_vang.png) |
+| TC08 | sonnt@myfap.vn | Tuần sau → buổi PRM393 | "Buổi học chưa diễn ra: chỉ xem", mọi SV "Chưa diễn ra", không có nút lưu | [tc08](docs/demo/tc08_buoi_chua_dien_ra.png) |
+| TC09 | he170003@myfap.vn | Điểm danh → PRM393 | "Vắng 25% (5/20 buổi)" + cảnh báo không đủ điều kiện dự thi | [tc09](docs/demo/tc09_vang_qua_20.png) |
+| TC10 | sonnt@myfap.vn | Nhập điểm → PRM393 → nhập điểm 4 SV đầu (bảng dưới), để trống HE170005 → Gửi duyệt | "Còn 1 sinh viên chưa đủ đầu điểm"; vẫn "Đang nhập điểm" | [tc10](docs/demo/tc10_thieu_diem.png) |
+| TC11 | sonnt@myfap.vn | Nhập điểm HE170005 → Gửi duyệt | "Chờ duyệt"; ô điểm bị khoá | [tc11](docs/demo/tc11_cho_duyet.png) |
+| TC12 | he170001@myfap.vn | Điểm học kỳ → PRM393 | "Điểm chưa được công bố", "Đang học" | [tc12](docs/demo/tc12_chua_cong_bo.png) |
+| TC13 | truongbm.se@myfap.vn | Duyệt bảng điểm → PRM393 → Trả lại, lý do "Kiểm tra lại Final Exam của Đỗ Khánh Linh" | "Bị trả lại" | [lý do](docs/demo/tc13_ly_do_tra_lai.png), [đã trả](docs/demo/tc13_da_tra_lai.png) |
+| TC14 | sonnt → truongbm.se | GV thấy lý do, sửa Final Exam HE170004 3.5 → 4.5, gửi lại → Trưởng BM Công bố | "Đã công bố" | [GV](docs/demo/tc14_gv_thay_ly_do.png), [công bố](docs/demo/tc14_da_cong_bo.png) |
+| TC15 | he170001 / he170003 | Điểm học kỳ → PRM393 | HE170001: **Passed**, TB 7.9. HE170003: **Not passed** – "Vắng quá 20% số buổi" dù TB 8.5 | [Passed](docs/demo/tc15_passed.png), [Not passed](docs/demo/tc15_not_passed_vang.png) |
+| TC16 | he170002@myfap.vn | Bảng điểm | AIL303m **Not passed** (TB 5.6 nhưng Final Exam 3); PRM393, PRN212 **Passed**; tích luỹ 6 tín chỉ | [tc16](docs/demo/tc16_bang_diem.png) |
+| TC17 | he170001@myfap.vn | Đơn từ → Gửi đơn "Xin tạm nghỉ một học kỳ", nội dung "abc" | "Nội dung đơn cần ít nhất 10 ký tự" ngay trong form | [tc17](docs/demo/tc17_noi_dung_ngan.png) |
+| TC18 | he170001@myfap.vn | Nhập nội dung đầy đủ → Gửi | Đơn mới "Đang xử lý" | [tc18](docs/demo/tc18_da_gui_don.png) |
+| TC19 | daotao@myfap.vn | Xử lý đơn từ → Từ chối đơn của HE170001, để trống lý do | "Nhập lý do khi từ chối đơn" | [tc19](docs/demo/tc19_tu_choi_thieu_ly_do.png) |
+| TC20 | daotao → he170001 | Chấp nhận kèm phản hồi → SV mở Đơn từ | "Đã được chấp nhận", người xử lý, phản hồi | [cán bộ](docs/demo/tc20_cbdt_chap_nhan.png), [SV](docs/demo/tc20_sv_thay_ket_qua.png) |
+| TC21 | daotao → he170001 / sonnt | Thông báo → Đăng thông báo, đối tượng "Sinh viên" | SV thấy thông báo; GV không thấy | [soạn](docs/demo/tc21_soan_thong_bao.png), [SV](docs/demo/tc21_sv_thay.png), [GV](docs/demo/tc21_gv_khong_thay.png) |
+
+Điểm dùng ở TC10–TC11 (Assignment / Progress Test / Project / Final Exam):
+
+| SV | Điểm | TB | Kết quả sau công bố |
 |---|---|---|---|
-| TC01 | bất kỳ | Đăng nhập với mật khẩu sai | Báo "Sai email hoặc mật khẩu", ở lại màn Login |
-| TC02 | daotao@myfap.vn | Lớp môn & lịch học → Mở lớp: SWD392, mã `SE1950`, phòng `BE-301`, slot 1, chọn thứ trùng lịch PRM393 | Báo "Phòng BE-301 slot 1 ngày … đã có lớp PRM393 - SE1943", không tạo lớp |
-| TC03 | daotao@myfap.vn | Mở lớp SWD392 `SE1950`, phòng `BE-305`, slot 3, T2 + T4, chọn HE170005 | Lớp xuất hiện, trạng thái "Đang nhập điểm", GV "chưa phân công"; HE170005 thấy lịch SWD392 |
-| TC04 | truongbm.ai@myfap.vn | Phân công giảng viên | Không thấy lớp nào của bộ môn SE |
-| TC05 | truongbm.se@myfap.vn | Phân công giảng viên → SWD392 - SE1944 → chọn Ngô Tùng Sơn | Lớp hiện "Giảng viên: sonnt5"; lịch dạy của sonnt có SWD392; lịch học của HE170001 hiện GV sonnt5 |
-| TC06 | sonnt@myfap.vn | Lịch dạy & điểm danh → buổi PRM393 hôm nay → tắt HE170002 → Lưu điểm danh | Báo "Đã lưu điểm danh"; buổi có dấu đã điểm danh |
-| TC07 | he170002@myfap.vn | Lịch học tuần | Buổi PRM393 hôm nay hiện "Vắng" |
-| TC08 | sonnt@myfap.vn | Mở một buổi PRM393 của tuần sau | "Buổi học chưa diễn ra: chỉ xem", không có nút lưu |
-| TC09 | he170003@myfap.vn | Điểm danh → PRM393 | "Vắng 25% (5/20 buổi)" và cảnh báo không đủ điều kiện dự thi |
-| TC10 | sonnt@myfap.vn | Nhập điểm → PRM393 → nhập đủ 4 đầu điểm cho 4/5 sinh viên → Gửi duyệt | Báo "Còn 1 sinh viên chưa đủ đầu điểm"; trạng thái vẫn "Đang nhập điểm" |
-| TC11 | sonnt@myfap.vn | Nhập nốt sinh viên còn lại → Gửi duyệt | Trạng thái "Chờ duyệt"; ô điểm bị khoá |
-| TC12 | he170001@myfap.vn | Điểm học kỳ → PRM393 | "Điểm chưa được công bố", trạng thái "Đang học" |
-| TC13 | truongbm.se@myfap.vn | Duyệt bảng điểm → PRM393 → Trả lại, lý do "Kiểm tra lại Final Exam" | Trạng thái "Bị trả lại"; GV thấy lý do và sửa được điểm |
-| TC14 | sonnt → truongbm.se | GV gửi lại → Trưởng BM bấm Công bố | Trạng thái "Đã công bố" |
-| TC15 | he170001 / he170003 | Điểm học kỳ → PRM393 | HE170001: điểm từng đầu, trung bình, **Passed**. HE170003: **Not passed** – "Vắng quá 20% số buổi" |
-| TC16 | he170002@myfap.vn | Bảng điểm | AIL303m **Not passed** (Final Exam dưới 4) không cộng tín chỉ; PRN212 **Passed** cộng 3 tín chỉ |
-| TC17 | he170001@myfap.vn | Đơn từ → Gửi đơn "Xin tạm nghỉ một học kỳ", nội dung "abc" | Báo "Nội dung đơn cần ít nhất 10 ký tự" |
-| TC18 | he170001@myfap.vn | Gửi lại với nội dung đầy đủ | Đơn mới trạng thái "Đang xử lý" |
-| TC19 | daotao@myfap.vn | Xử lý đơn từ → Từ chối đơn của HE170001, để trống lý do | Báo "Nhập lý do khi từ chối đơn" |
-| TC20 | daotao → he170001 | Chấp nhận đơn, phản hồi "Đã duyệt" → SV mở Đơn từ | "Đã được chấp nhận", người xử lý, phản hồi |
-| TC21 | daotao → he170001 / sonnt | Thông báo → Đăng thông báo, đối tượng "Sinh viên" | Sinh viên thấy thông báo; giảng viên không thấy |
+| HE170001 | 8 / 7.5 / 9 / 7 | 7.9 | Passed |
+| HE170002 | 7 / 6 / 8 / 6.5 | 7.0 | Passed (vắng 1/20 buổi) |
+| HE170003 | 9 / 8 / 9 / 8 | 8.5 | Not passed – vắng 5/20 buổi |
+| HE170004 | 6 / 5 / 7 / 3.5 → 4.5 (TC14) | 5.7 | Passed |
+| HE170005 | 5 / 4 / 5 / 5 | 4.8 | Not passed – TB dưới 5 |
 
-Test tự động phủ các quy trình trên: `test/workflow/business_process_test.dart` (mở lớp → phân công → điểm danh → nhập
-điểm → trả lại → công bố → sinh viên xem; đơn từ), `test/domain/rules_test.dart`, `test/widget/take_attendance_screen_test.dart`.
+Mở lại app sau khi đã đăng nhập thì vào thẳng Trang chủ (Firebase Auth giữ phiên): [ảnh](docs/demo/gv_trang_chu_tu_dang_nhap.png).
 
-## 7. Cài đặt
+Test tự động: `test/workflow/business_process_test.dart` (mở lớp → phân công → điểm danh → nhập điểm → trả lại → công bố
+→ SV xem; đơn từ), `test/domain/rules_test.dart`, `test/widget/` (điểm danh, form gửi đơn).
 
-1. Firebase console: tạo project → thêm app Android package **`vn.edu.fpt.myfap_sim`** → tải `google-services.json`
-   vào `android/app/`.
-2. Authentication → Sign-in method → bật **Email/Password**.
-3. Firestore Database → tạo database ở **test mode**.
-4. Nạp dữ liệu mẫu: `dart run tool/seed.dart`
-5. Khoá quyền: dán `firebase/firestore.rules` vào tab Rules của Firestore, hoặc
-   `firebase deploy --only firestore:rules --project <project-id>`.
-   Chạy lại seed về sau: chuyển Rules về test mode, seed, rồi dán lại rules.
-6. Chạy: `flutter run` (Android). Bản release: `flutter build apk --release`.
-   Build Android cần **NDK 28.2.13676358**. Nếu Gradle báo không cài được NDK, mở Android Studio → SDK Manager →
-   SDK Tools → NDK (Side by side) để cài; thư mục SDK `C:\Android\Sdk` cần quyền ghi (chạy Android Studio bằng quyền admin).
+### Kiểm tra phân quyền trên Firebase thật
+
+Gọi thẳng Firestore REST bằng ID token của từng tài khoản (bỏ qua app), 30/09/2026:
+
+| Thao tác | Kết quả |
+|---|---|
+| SV đọc điểm đã công bố của mình | Cho phép (200) |
+| SV đọc điểm của SV khác / truy vấn toàn bộ điểm của lớp | Chặn (403) |
+| SV tự đổi `role` thành `staff` | Chặn (403) |
+| SV gửi đơn đứng tên SV khác / đọc đơn của SV khác / đăng thông báo | Chặn (403) |
+| GV điểm danh lớp mình không dạy / sửa điểm lớp đã công bố | Chặn (403) |
+| Trưởng BM AI trả lại bảng điểm lớp bộ môn SE | Chặn (403) |
+| Cán bộ ĐT xử lý lại đơn đã duyệt | Chặn (403) |
+
+## 7. Cài đặt và chạy
+
+Firebase đã dựng sẵn: project **`prm393-myfap-sim`** (Firestore `asia-southeast1`, Auth Email/Password, rules đã
+triển khai). `android/app/google-services.json` đã có trong repo.
+
+1. `flutter pub get`
+2. Chạy: `flutter run` trên thiết bị Android. Bản release: `flutter build apk --release` →
+   `build/app/outputs/flutter-apk/app-release.apk`.
+3. Reset dữ liệu demo (ngay trước buổi demo, khoảng 2 phút): `firebase login` bằng tài khoản thành viên project, rồi
+   `dart run tool/seed.dart`. Seed ghi bằng quyền quản trị project nên không cần mở rules.
+4. Sửa phân quyền: sửa `firebase/firestore.rules` rồi `firebase deploy --only firestore:rules`.
+5. Cho thành viên nhóm chạy bước 3–4: Firebase console → Project settings → Users and permissions → Add member.
+
+Build Android cần **NDK 28.2.13676358**. Nếu Gradle báo không cài được NDK, mở Android Studio → SDK Manager → SDK Tools →
+NDK (Side by side) để cài; thư mục SDK `C:\Android\Sdk` cần quyền ghi (chạy Android Studio bằng quyền admin).
 
 ```bash
 flutter pub get

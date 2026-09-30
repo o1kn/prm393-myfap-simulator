@@ -64,6 +64,8 @@ class _NotificationsView extends StatelessWidget {
     final title = TextEditingController();
     final content = TextEditingController();
     var audience = Audience.all;
+    // Lỗi hiện ngay trong sheet: SnackBar nằm dưới lớp modal nên bị che.
+    String? error;
     await showModalBottomSheet<void>(
       context: context,
       isScrollControlled: true,
@@ -104,6 +106,13 @@ class _NotificationsView extends StatelessWidget {
                 onSelectionChanged: (s) => setSheet(() => audience = s.first),
               ),
               const SizedBox(height: 16),
+              if (error != null) ...[
+                Text(
+                  error!,
+                  style: TextStyle(color: Theme.of(sheet).colorScheme.error),
+                ),
+                const SizedBox(height: 8),
+              ],
               FilledButton(
                 onPressed: () async {
                   final ok = await vm.publish(
@@ -112,7 +121,11 @@ class _NotificationsView extends StatelessWidget {
                     audience,
                   );
                   if (!sheet.mounted) return;
-                  if (ok) Navigator.of(sheet).pop();
+                  if (!ok) {
+                    setSheet(() => error = vm.error);
+                    return;
+                  }
+                  Navigator.of(sheet).pop();
                   showResult(context, vm, 'Đã đăng thông báo');
                 },
                 child: const Text('Đăng'),

@@ -31,12 +31,15 @@ class TakeAttendanceViewModel extends BaseViewModel {
 
   Future<void> load() => run(() async {
     students = await _users.byIds(session.studentIds);
+    // Buổi đã tới ngày mà chưa điểm danh: mặc định có mặt, giảng viên chỉ
+    // bấm người vắng. Buổi chưa tới ngày: hiện "Chưa diễn ra".
+    final fallback = editable
+        ? AttendanceStatus.present
+        : AttendanceStatus.notYet;
     marks
       ..clear()
       ..addAll({
-        // Chưa điểm danh thì mặc định có mặt; giảng viên chỉ bấm người vắng.
-        for (final s in students)
-          s.uid: session.attendance[s.uid] ?? AttendanceStatus.present,
+        for (final s in students) s.uid: session.attendance[s.uid] ?? fallback,
       });
   });
 

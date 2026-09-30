@@ -70,6 +70,8 @@ class _ApplicationsView extends StatelessWidget {
   ) async {
     final content = TextEditingController();
     var type = applicationTypes.first;
+    // Lỗi hiện ngay trong sheet: SnackBar nằm dưới lớp modal nên bị che.
+    String? error;
     await showModalBottomSheet<void>(
       context: context,
       isScrollControlled: true,
@@ -107,11 +109,22 @@ class _ApplicationsView extends StatelessWidget {
                 ),
               ),
               const SizedBox(height: 16),
+              if (error != null) ...[
+                Text(
+                  error!,
+                  style: TextStyle(color: Theme.of(sheet).colorScheme.error),
+                ),
+                const SizedBox(height: 8),
+              ],
               FilledButton(
                 onPressed: () async {
                   final ok = await vm.submit(type, content.text);
                   if (!sheet.mounted) return;
-                  if (ok) Navigator.of(sheet).pop();
+                  if (!ok) {
+                    setSheet(() => error = vm.error);
+                    return;
+                  }
+                  Navigator.of(sheet).pop();
                   showResult(context, vm, 'Đã gửi đơn');
                 },
                 child: const Text('Gửi'),

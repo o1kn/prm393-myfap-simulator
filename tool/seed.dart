@@ -4,8 +4,11 @@
 //
 // Đọc apiKey / projectId từ android/app/google-services.json, tạo tài khoản
 // Firebase Auth (email/password) cho 4 vai trò rồi ghi Firestore qua REST API.
-// Chạy khi Firestore còn ở chế độ test (luật mở); sau đó mới triển khai
-// firebase/firestore.rules — luật thật chặn ghi `users` từ phía client.
+//
+// Dữ liệu được ghi bằng token OAuth của tài khoản đang `firebase login`
+// (thành viên project). Request loại này được IAM cấp quyền và không đi qua
+// firebase/firestore.rules — giống Admin SDK — nên KHÔNG phải mở rules khi
+// nạp lại dữ liệu. Chạy lại ngay trước buổi demo để có buổi học "hôm nay".
 // ignore_for_file: avoid_print
 import 'dart:convert';
 import 'dart:io';
@@ -17,7 +20,7 @@ const semester = 'Fall2026';
 
 late final String apiKey;
 late final String projectId;
-late String idToken;
+late final String adminToken;
 
 Future<void> main() async {
   final config = jsonDecode(
@@ -45,8 +48,7 @@ Future<void> main() async {
   for (final e in people.entries) {
     uid[e.key] = await _account(e.value['email']!);
   }
-  // Ghi dữ liệu bằng phiên của cán bộ đào tạo.
-  await _account(people['staff']!['email']!);
+  adminToken = await _adminToken();
 
   for (final c in [
     'users',
@@ -358,16 +360,34 @@ Future<String> _account(String email) async {
     throw StateError('Auth $email: ${res.body}');
   }
   final json = jsonDecode(res.body) as Map<String, dynamic>;
-  idToken = json['idToken'] as String;
   print('  tài khoản $email');
   return json['localId'] as String;
+}
+
+/// Access token của tài khoản đang đăng nhập Firebase CLI. Chạy một lệnh CLI
+/// bất kỳ để CLI tự làm mới token rồi ghi lại vào configstore.
+Future<String> _adminToken() async {
+  final r = await Process.run('firebase', [
+    'projects:list',
+    '--json',
+  ], runInShell: true);
+  if (r.exitCode != 0) {
+    throw StateError(
+      'Chạy `firebase login` bằng tài khoản có quyền trên project trước.',
+    );
+  }
+  final home =
+      Platform.environment['USERPROFILE'] ?? Platform.environment['HOME']!;
+  final store = File('$home/.config/configstore/firebase-tools.json');
+  final tokens = (jsonDecode(store.readAsStringSync()) as Map)['tokens'] as Map;
+  return tokens['access_token'] as String;
 }
 
 String get _base =>
     'https://firestore.googleapis.com/v1/projects/$projectId/databases/(default)/documents';
 
 Map<String, String> get _headers => {
-  'Authorization': 'Bearer $idToken',
+  'Authorization': 'Bearer $adminToken',
   'Content-Type': 'application/json',
 };
 

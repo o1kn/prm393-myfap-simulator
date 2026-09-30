@@ -75,7 +75,9 @@ void main() {
     expect(saved.data()!['attendance'], {'an': 'present', 'ha': 'absent'});
   });
 
-  testWidgets('Buổi học ngày mai: chỉ xem, không có nút lưu', (tester) async {
+  testWidgets('Buổi học ngày mai: chỉ xem, SV hiện "Chưa diễn ra"', (
+    tester,
+  ) async {
     final db = FakeFirebaseFirestore();
     final tomorrow = DateUtils.dateOnly(DateTime.now())
         .add(const Duration(days: 1));
@@ -85,5 +87,9 @@ void main() {
 
     expect(find.textContaining('chưa điểm danh được'), findsOneWidget);
     expect(find.text('Lưu điểm danh'), findsNothing);
+    // Trước đây mặc định hiện "Có mặt" cho buổi chưa diễn ra.
+    expect(find.text('Chưa diễn ra'), findsNWidgets(2));
+    expect(find.text('Có mặt'), findsNothing);
+    expect(find.byType(Switch), findsNothing);
   });
 }
