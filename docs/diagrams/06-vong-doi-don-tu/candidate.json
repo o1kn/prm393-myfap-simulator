@@ -1,0 +1,124 @@
+{
+  "schema_version": 2,
+  "diagram_type": "lifecycle",
+  "meta": {
+    "title": "Vòng đời đơn từ",
+    "output": "docs/diagrams/06-vong-doi-don-tu/vong-doi-don-tu.html",
+    "quality_profile": "showcase",
+    "repository": {
+      "url": "https://github.com/o1kn/prm393-myfap-simulator.git",
+      "provider": "github",
+      "link_mode": "local-only",
+      "revision": "ebb3ec1846ee148af1249c60b99f1ce6301b5749"
+    }
+  },
+  "lanes": [
+    { "id": "main", "label": "Gửi và xử lý đơn" },
+    { "id": "terminal", "label": "Kết quả cuối (không xử lý lại)" }
+  ],
+  "states": [
+    {
+      "id": "soan_don",
+      "type": "start",
+      "label": "Sinh viên gửi đơn",
+      "sublabel": "chọn loại đơn + nội dung",
+      "lane": "main",
+      "col": 0,
+      "step": "01",
+      "tag": "student",
+      "sources": [
+        { "path": "lib/data/repositories/application_repository.dart", "line": 32, "end_line": 51, "label": "submit()" },
+        { "path": "lib/core/constants.dart", "line": 27, "end_line": 35, "label": "applicationTypes" }
+      ]
+    },
+    {
+      "id": "processing",
+      "type": "waiting",
+      "label": "Đang xử lý",
+      "sublabel": "status: processing",
+      "lane": "main",
+      "col": 1,
+      "step": "02",
+      "tag": "processing",
+      "sources": [
+        { "path": "lib/data/models/application_form.dart", "line": 2, "end_line": 10, "label": "ApplicationStatus" },
+        { "path": "firebase/firestore.rules", "line": 182, "end_line": 195, "label": "rules: create đơn" }
+      ]
+    },
+    {
+      "id": "xu_ly",
+      "type": "decision",
+      "label": "Cán bộ ĐT xử lý",
+      "sublabel": "transaction đọc lại status",
+      "lane": "main",
+      "col": 2,
+      "step": "03",
+      "tag": "staff",
+      "sources": [
+        { "path": "lib/data/repositories/application_repository.dart", "line": 55, "end_line": 80, "label": "process()" },
+        { "path": "firebase/firestore.rules", "line": 196, "end_line": 200, "label": "rules: update đơn" }
+      ]
+    },
+    {
+      "id": "approved",
+      "type": "success",
+      "label": "Đã được chấp nhận",
+      "sublabel": "status: approved",
+      "lane": "terminal",
+      "col": 2,
+      "tag": "terminal",
+      "sources": [
+        { "path": "lib/data/models/application_form.dart", "line": 4, "label": "approved" },
+        { "path": "lib/data/repositories/application_repository.dart", "line": 73, "end_line": 78, "label": "tx.update()" }
+      ]
+    },
+    {
+      "id": "rejected",
+      "type": "failure",
+      "label": "Đã bị từ chối",
+      "sublabel": "status: rejected",
+      "lane": "terminal",
+      "col": 3,
+      "tag": "terminal",
+      "sources": [
+        { "path": "lib/data/models/application_form.dart", "line": 5, "label": "rejected" },
+        { "path": "lib/data/repositories/application_repository.dart", "line": 61, "end_line": 63, "label": "bắt buộc lý do" }
+      ]
+    }
+  ],
+  "transitions": [
+    { "from": "soan_don", "to": "processing", "label": "gửi đơn hợp lệ" },
+    { "from": "processing", "to": "xu_ly", "label": "cán bộ mở đơn" },
+    { "from": "xu_ly", "to": "approved", "label": "chấp nhận", "variant": "emphasis" },
+    { "from": "xu_ly", "to": "rejected", "label": "từ chối + lý do", "variant": "security" }
+  ],
+  "cards": [
+    {
+      "dot": "cyan",
+      "title": "Điều kiện gửi đơn",
+      "items": [
+        "Nội dung đơn từ 10 đến 2000 ký tự",
+        "Loại đơn thuộc danh mục applicationTypes",
+        "Đơn mới luôn có status: processing"
+      ]
+    },
+    {
+      "dot": "amber",
+      "title": "Xử lý trong transaction",
+      "items": [
+        "Đọc lại status trước khi ghi",
+        "Chỉ đơn đang processing mới được xử lý",
+        "Hai cán bộ mở cùng đơn: chỉ người đến trước thành công"
+      ]
+    },
+    {
+      "dot": "rose",
+      "title": "Trạng thái cuối",
+      "items": [
+        "approved và rejected không xử lý lại được",
+        "Từ chối bắt buộc có lý do (tối đa 1000 ký tự)",
+        "Cán bộ ĐT ghi staffNote, processedBy, processedAt"
+      ]
+    }
+  ]
+}

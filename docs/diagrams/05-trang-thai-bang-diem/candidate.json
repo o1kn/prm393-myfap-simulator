@@ -1,0 +1,140 @@
+{
+  "schema_version": 2,
+  "diagram_type": "lifecycle",
+  "meta": {
+    "title": "Vòng đời trạng thái bảng điểm (gradeStatus)",
+    "output": "docs/diagrams/05-trang-thai-bang-diem/trang-thai-bang-diem.html",
+    "quality_profile": "showcase",
+    "locale": "vi",
+    "repository": {
+      "url": "https://github.com/o1kn/prm393-myfap-simulator.git",
+      "provider": "github",
+      "revision": "ebb3ec1846ee148af1249c60b99f1ce6301b5749"
+    }
+  },
+  "lanes": [
+    { "id": "main", "label": "Luồng chính: giảng viên → trưởng bộ môn" },
+    { "id": "revision", "label": "Nhánh sửa lại" },
+    { "id": "terminal", "label": "Kết thúc" }
+  ],
+  "states": [
+    {
+      "id": "draft",
+      "type": "start",
+      "label": "Đang nhập điểm",
+      "sublabel": "draft · lớp mới tạo",
+      "lane": "main",
+      "col": 0,
+      "step": "01",
+      "tag": "giảng viên sửa",
+      "sources": [
+        { "path": "lib/data/models/course_class.dart", "line": 3, "end_line": 4, "label": "GradeStatus.draft" },
+        { "path": "firebase/firestore.rules", "line": 73, "end_line": 81, "label": "Lớp tạo ra luôn là draft" }
+      ]
+    },
+    {
+      "id": "submitted",
+      "type": "waiting",
+      "label": "Chờ duyệt",
+      "sublabel": "submitted · khoá điểm",
+      "lane": "main",
+      "col": 2,
+      "step": "02",
+      "tag": "trưởng BM xem",
+      "sources": [
+        { "path": "lib/data/models/course_class.dart", "line": 6, "end_line": 7, "label": "GradeStatus.submitted" },
+        { "path": "lib/data/models/course_class.dart", "line": 19, "end_line": 20, "label": "lecturerCanEdit" }
+      ]
+    },
+    {
+      "id": "returned",
+      "type": "active",
+      "label": "Bị trả lại",
+      "sublabel": "returned · có headNote",
+      "lane": "revision",
+      "col": 2,
+      "step": "03",
+      "tag": "giảng viên sửa",
+      "sources": [
+        { "path": "lib/data/models/course_class.dart", "line": 9, "end_line": 10, "label": "GradeStatus.returned" },
+        { "path": "lib/data/repositories/grade_repository.dart", "line": 64, "end_line": 68, "label": "Ghi headNote" }
+      ]
+    },
+    {
+      "id": "published",
+      "type": "success",
+      "label": "Đã công bố",
+      "sublabel": "published · sinh viên thấy điểm",
+      "lane": "terminal",
+      "col": 4,
+      "step": "04",
+      "tag": "trạng thái cuối",
+      "sources": [
+        { "path": "lib/data/models/course_class.dart", "line": 12, "end_line": 13, "label": "GradeStatus.published" },
+        { "path": "lib/data/repositories/grade_repository.dart", "line": 52, "end_line": 62, "label": "publish()" }
+      ]
+    }
+  ],
+  "transitions": [
+    {
+      "id": "t_submit",
+      "from": "draft",
+      "to": "submitted",
+      "label": "GV gửi duyệt",
+      "note": "Điều kiện: mọi sinh viên đủ đầu điểm (isComplete)",
+      "variant": "emphasis"
+    },
+    {
+      "id": "t_publish",
+      "from": "submitted",
+      "to": "published",
+      "label": "Trưởng BM công bố",
+      "variant": "emphasis"
+    },
+    {
+      "id": "t_return",
+      "from": "submitted",
+      "to": "returned",
+      "label": "Trả lại + lý do",
+      "note": "Điều kiện: phải nhập lý do (headNote không rỗng)",
+      "variant": "security"
+    },
+    {
+      "id": "t_resubmit",
+      "from": "returned",
+      "to": "submitted",
+      "label": "GV sửa, gửi lại",
+      "note": "Cùng điều kiện đủ đầu điểm; headNote được xoá về rỗng",
+      "variant": "dashed"
+    }
+  ],
+  "cards": [
+    {
+      "dot": "cyan",
+      "title": "draft và returned: giảng viên được sửa",
+      "items": [
+        "lecturerCanEdit = true: nhập điểm, lưu nháp, gửi duyệt",
+        "Cán bộ đào tạo còn thêm được sinh viên vào lớp",
+        "Luật bảo mật chỉ cho ghi grades khi lớp là draft hoặc returned"
+      ]
+    },
+    {
+      "dot": "amber",
+      "title": "submitted: chờ trưởng bộ môn",
+      "items": [
+        "Giảng viên không sửa được điểm; không thêm được sinh viên",
+        "Chỉ trưởng bộ môn đúng bộ môn mới công bố hoặc trả lại",
+        "Trả lại bắt buộc có lý do, công bố bật published trên từng điểm"
+      ]
+    },
+    {
+      "dot": "emerald",
+      "title": "published: khoá hẳn",
+      "items": [
+        "Không có chuyển trạng thái nào đi ra khỏi published",
+        "Điểm danh và danh sách buổi học bị khoá",
+        "Sinh viên chỉ đọc được điểm của mình khi published = true"
+      ]
+    }
+  ]
+}

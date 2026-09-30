@@ -1,0 +1,537 @@
+{
+  "schema_version": 1,
+  "diagram_type": "sequence",
+  "meta": {
+    "title": "Điểm danh: giảng viên ghi nhận, sinh viên theo dõi",
+    "output": "docs/diagrams/04-diem-danh/diem-danh.html",
+    "locale": "vi",
+    "quality_profile": "showcase",
+    "repository": {
+      "url": "https://github.com/o1kn/prm393-myfap-simulator.git",
+      "provider": "github",
+      "revision": "ebb3ec1846ee148af1249c60b99f1ce6301b5749"
+    }
+  },
+  "participants": [
+    {
+      "id": "lecturer",
+      "type": "external",
+      "label": "Giảng viên",
+      "sublabel": "role lecturer",
+      "sources": [
+        {
+          "path": "lib/views/timetable_screen.dart",
+          "line": 268,
+          "end_line": 278,
+          "label": "GV chạm thẻ buổi học"
+        }
+      ]
+    },
+    {
+      "id": "screen",
+      "type": "frontend",
+      "label": "Màn hình GV",
+      "sublabel": "Tuần · Điểm danh",
+      "sources": [
+        {
+          "path": "lib/views/timetable_screen.dart",
+          "line": 268,
+          "end_line": 278,
+          "label": "push TakeAttendanceScreen"
+        },
+        {
+          "path": "lib/viewmodels/lecturer/take_attendance_view_model.dart",
+          "line": 35,
+          "end_line": 104,
+          "label": "editable/load/toggle/save"
+        },
+        {
+          "path": "lib/views/lecturer/take_attendance_screen.dart",
+          "line": 36,
+          "end_line": 56,
+          "label": "chặn back khi chưa lưu"
+        }
+      ]
+    },
+    {
+      "id": "repo",
+      "type": "backend",
+      "label": "Repository",
+      "sublabel": "AcademicRepository",
+      "sources": [
+        {
+          "path": "lib/data/repositories/academic_repository.dart",
+          "line": 242,
+          "end_line": 246,
+          "label": "sessionsOfStudent/Lecturer"
+        },
+        {
+          "path": "lib/data/repositories/academic_repository.dart",
+          "line": 289,
+          "end_line": 294,
+          "label": "saveAttendance"
+        }
+      ]
+    },
+    {
+      "id": "fs",
+      "type": "database",
+      "label": "Firestore",
+      "sublabel": "sessions + Rules",
+      "sources": [
+        {
+          "path": "lib/data/models/class_session.dart",
+          "line": 54,
+          "end_line": 55,
+          "label": "attendance: uid → status"
+        },
+        {
+          "path": "firebase/firestore.rules",
+          "line": 113,
+          "end_line": 129,
+          "label": "read / update sessions"
+        }
+      ]
+    },
+    {
+      "id": "summary",
+      "type": "backend",
+      "label": "Tổng hợp",
+      "sublabel": "AttendanceSummary",
+      "sources": [
+        {
+          "path": "lib/domain/attendance_rules.dart",
+          "line": 13,
+          "end_line": 32,
+          "label": "AttendanceSummary.of"
+        },
+        {
+          "path": "lib/domain/attendance_rules.dart",
+          "line": 41,
+          "end_line": 45,
+          "label": "absentRate / isBanned"
+        }
+      ]
+    },
+    {
+      "id": "rvm",
+      "type": "frontend",
+      "label": "Báo cáo VM",
+      "sublabel": "AttendanceReportVM",
+      "sources": [
+        {
+          "path": "lib/viewmodels/student/attendance_report_view_model.dart",
+          "line": 23,
+          "end_line": 36,
+          "label": "load()"
+        },
+        {
+          "path": "lib/viewmodels/student/attendance_report_view_model.dart",
+          "line": 49,
+          "end_line": 55,
+          "label": "summary / summaryFor"
+        }
+      ]
+    },
+    {
+      "id": "student",
+      "type": "external",
+      "label": "Sinh viên",
+      "sublabel": "role student",
+      "sources": [
+        {
+          "path": "lib/views/student/attendance_report_screen.dart",
+          "line": 39,
+          "end_line": 43,
+          "label": "tone theo tỉ lệ vắng"
+        }
+      ]
+    }
+  ],
+  "segments": [
+    {
+      "from": 162,
+      "to": 322,
+      "label": "1. Mở thời khoá biểu"
+    },
+    {
+      "from": 352,
+      "to": 506,
+      "label": "2. Mở buổi học"
+    },
+    {
+      "from": 538,
+      "to": 832,
+      "label": "3. Điểm danh và lưu"
+    },
+    {
+      "from": 864,
+      "to": 934,
+      "label": "4. Rời màn (tuỳ chọn)"
+    },
+    {
+      "from": 966,
+      "to": 1232,
+      "label": "5. Sinh viên xem"
+    }
+  ],
+  "messages": [
+    {
+      "id": "open-timetable",
+      "from": "lecturer",
+      "to": "screen",
+      "y": 195,
+      "label": "mở Thời khoá biểu (tuần)",
+      "variant": "default"
+    },
+    {
+      "id": "lecturer-sessions",
+      "from": "screen",
+      "to": "repo",
+      "y": 223,
+      "label": "sessionsOfLecturer(uid)",
+      "variant": "default"
+    },
+    {
+      "id": "lecturer-query",
+      "from": "repo",
+      "to": "fs",
+      "y": 251,
+      "label": "sessions where lecturerId == uid",
+      "variant": "default"
+    },
+    {
+      "id": "lecturer-docs",
+      "from": "fs",
+      "to": "repo",
+      "y": 279,
+      "label": "các buổi của giảng viên",
+      "variant": "return"
+    },
+    {
+      "id": "week-list",
+      "from": "repo",
+      "to": "screen",
+      "y": 307,
+      "label": "List<ClassSession> theo tuần",
+      "variant": "return"
+    },
+    {
+      "id": "tap-session",
+      "from": "lecturer",
+      "to": "screen",
+      "y": 380,
+      "label": "chạm thẻ → TakeAttendanceScreen",
+      "variant": "emphasis"
+    },
+    {
+      "id": "class-by-id",
+      "from": "screen",
+      "to": "repo",
+      "y": 408,
+      "label": "load(): classById(session.classId)",
+      "variant": "default"
+    },
+    {
+      "id": "class-status",
+      "from": "repo",
+      "to": "screen",
+      "y": 436,
+      "label": "gradeStatus của lớp",
+      "variant": "return"
+    },
+    {
+      "id": "student-marks",
+      "from": "screen",
+      "to": "lecturer",
+      "y": 464,
+      "label": "SV: mặc định present",
+      "variant": "return"
+    },
+    {
+      "id": "readonly",
+      "from": "screen",
+      "to": "lecturer",
+      "y": 492,
+      "label": "opt !editable → chỉ xem",
+      "variant": "dashed"
+    },
+    {
+      "id": "toggle",
+      "from": "lecturer",
+      "to": "screen",
+      "y": 566,
+      "label": "toggle(uid) → absent",
+      "variant": "default"
+    },
+    {
+      "id": "press-save",
+      "from": "lecturer",
+      "to": "screen",
+      "y": 594,
+      "label": "bấm Lưu: save()",
+      "variant": "emphasis"
+    },
+    {
+      "id": "save-attendance",
+      "from": "screen",
+      "to": "repo",
+      "y": 622,
+      "label": "saveAttendance(session.id, marks)",
+      "variant": "emphasis"
+    },
+    {
+      "id": "update-doc",
+      "from": "repo",
+      "to": "fs",
+      "y": 650,
+      "label": "update({attendance: {uid: present/absent}})",
+      "variant": "emphasis"
+    },
+    {
+      "id": "rule-owner",
+      "from": "fs",
+      "to": "repo",
+      "y": 678,
+      "label": "Rules: GV của lớp · lớp chưa published",
+      "variant": "security"
+    },
+    {
+      "id": "rule-shape",
+      "from": "fs",
+      "to": "repo",
+      "y": 706,
+      "label": "Rules: chỉ attendance · uid ∈ studentIds · present/absent",
+      "variant": "security"
+    },
+    {
+      "id": "write-ok",
+      "from": "fs",
+      "to": "repo",
+      "y": 734,
+      "label": "allow → ghi thành công",
+      "variant": "return"
+    },
+    {
+      "id": "rule-deny",
+      "from": "fs",
+      "to": "repo",
+      "y": 762,
+      "label": "alt deny → PERMISSION_DENIED, vết chưa lưu giữ nguyên",
+      "variant": "dashed"
+    },
+    {
+      "id": "save-done",
+      "from": "repo",
+      "to": "screen",
+      "y": 790,
+      "label": "_saved = marks",
+      "variant": "return"
+    },
+    {
+      "id": "saved-toast",
+      "from": "screen",
+      "to": "lecturer",
+      "y": 818,
+      "label": "Đã lưu điểm danh",
+      "variant": "return"
+    },
+    {
+      "id": "press-back",
+      "from": "lecturer",
+      "to": "screen",
+      "y": 892,
+      "label": "opt Back khi hasUnsavedChanges",
+      "variant": "default"
+    },
+    {
+      "id": "unsaved-dialog",
+      "from": "screen",
+      "to": "lecturer",
+      "y": 920,
+      "label": "hộp thoại Lưu / Bỏ / Ở lại",
+      "variant": "dashed"
+    },
+    {
+      "id": "open-report",
+      "from": "student",
+      "to": "rvm",
+      "y": 994,
+      "label": "mở Điểm danh, chọn lớp môn",
+      "variant": "default"
+    },
+    {
+      "id": "sessions-of-student",
+      "from": "rvm",
+      "to": "repo",
+      "y": 1022,
+      "label": "load(): sessionsOfStudent(uid)",
+      "variant": "default"
+    },
+    {
+      "id": "student-query",
+      "from": "repo",
+      "to": "fs",
+      "y": 1050,
+      "label": "sessions where studentIds array-contains uid",
+      "variant": "default"
+    },
+    {
+      "id": "read-check",
+      "from": "fs",
+      "to": "repo",
+      "y": 1078,
+      "label": "Rules: uid ∈ resource.studentIds → cho đọc",
+      "variant": "security"
+    },
+    {
+      "id": "student-docs",
+      "from": "fs",
+      "to": "repo",
+      "y": 1106,
+      "label": "buổi học + bản đồ attendance",
+      "variant": "return"
+    },
+    {
+      "id": "student-list",
+      "from": "repo",
+      "to": "rvm",
+      "y": 1134,
+      "label": "List<ClassSession>",
+      "variant": "return"
+    },
+    {
+      "id": "summary-of",
+      "from": "rvm",
+      "to": "summary",
+      "y": 1162,
+      "label": "AttendanceSummary.of(buổi của lớp, uid)",
+      "variant": "default"
+    },
+    {
+      "id": "summary-result",
+      "from": "summary",
+      "to": "rvm",
+      "y": 1190,
+      "label": "absentRate = absent/total; isBanned",
+      "variant": "return"
+    },
+    {
+      "id": "show-rate",
+      "from": "rvm",
+      "to": "student",
+      "y": 1218,
+      "label": "% vắng; vượt 20% → cảnh báo Cấm thi",
+      "variant": "emphasis"
+    }
+  ],
+  "activations": [
+    {
+      "participant": "screen",
+      "from": 190,
+      "to": 312,
+      "type": "frontend"
+    },
+    {
+      "participant": "screen",
+      "from": 375,
+      "to": 497,
+      "type": "frontend"
+    },
+    {
+      "participant": "screen",
+      "from": 561,
+      "to": 823,
+      "type": "frontend"
+    },
+    {
+      "participant": "screen",
+      "from": 887,
+      "to": 925,
+      "type": "frontend"
+    },
+    {
+      "participant": "repo",
+      "from": 218,
+      "to": 312,
+      "type": "backend"
+    },
+    {
+      "participant": "repo",
+      "from": 403,
+      "to": 441,
+      "type": "backend"
+    },
+    {
+      "participant": "repo",
+      "from": 617,
+      "to": 795,
+      "type": "backend"
+    },
+    {
+      "participant": "repo",
+      "from": 1017,
+      "to": 1139,
+      "type": "backend"
+    },
+    {
+      "participant": "fs",
+      "from": 246,
+      "to": 284,
+      "type": "database"
+    },
+    {
+      "participant": "fs",
+      "from": 645,
+      "to": 767,
+      "type": "database"
+    },
+    {
+      "participant": "fs",
+      "from": 1045,
+      "to": 1111,
+      "type": "database"
+    },
+    {
+      "participant": "rvm",
+      "from": 989,
+      "to": 1223,
+      "type": "frontend"
+    },
+    {
+      "participant": "summary",
+      "from": 1157,
+      "to": 1195,
+      "type": "backend"
+    }
+  ],
+  "cards": [
+    {
+      "dot": "emerald",
+      "title": "Giảng viên điểm danh",
+      "items": [
+        "load() lấy classById rồi mặc định present cho buổi đã đến ngày",
+        "toggle(uid) chỉ đổi present/absent khi editable",
+        "save() gọi saveAttendance → update trường attendance của sessions/{id}"
+      ]
+    },
+    {
+      "dot": "rose",
+      "title": "Security Rules chặn ghi sai",
+      "items": [
+        "Chỉ giảng viên của lớp, lớp chưa published",
+        "Chỉ sửa attendance; key thuộc studentIds; giá trị present/absent",
+        "Buổi tương lai bị chặn ở ViewModel: canTakeAttendance, chỉ xem"
+      ]
+    },
+    {
+      "dot": "amber",
+      "title": "Sinh viên xem kết quả",
+      "items": [
+        "Đọc sessions theo studentIds array-contains uid",
+        "absentRate = absent / total (tính cả buổi chưa diễn ra)",
+        "isBanned khi absentRate > maxAbsentRate (0.2): không đủ điều kiện dự thi"
+      ]
+    }
+  ]
+}

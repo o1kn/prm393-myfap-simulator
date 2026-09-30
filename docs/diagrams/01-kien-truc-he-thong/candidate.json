@@ -1,0 +1,688 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "myFAP Giả Lập — Kiến trúc hệ thống",
+    "output": "docs/diagrams/01-kien-truc-he-thong/kien-truc-he-thong.html",
+    "quality_profile": "showcase",
+    "repository": {
+      "url": "https://github.com/o1kn/prm393-myfap-simulator.git",
+      "provider": "github",
+      "revision": "ebb3ec1846ee148af1249c60b99f1ce6301b5749"
+    },
+    "legend": {
+      "mode": "auto",
+      "entries": {
+        "frontend": {
+          "label": "Giao diện: View, ViewModel"
+        },
+        "backend": {
+          "label": "Repository, Domain, Models"
+        },
+        "database": {
+          "label": "Cơ sở dữ liệu Firestore"
+        },
+        "security": {
+          "label": "Xác thực và phân quyền"
+        },
+        "external": {
+          "label": "Người dùng, công cụ dev"
+        }
+      }
+    }
+  },
+  "components": [
+    {
+      "id": "staff",
+      "type": "external",
+      "label": "Cán bộ đào tạo",
+      "sublabel": "staff",
+      "icon": "person",
+      "pos": [
+        30,
+        126
+      ],
+      "size": [
+        130,
+        54
+      ],
+      "sources": [
+        {
+          "path": "lib/data/models/app_user.dart",
+          "line": 2,
+          "end_line": 6,
+          "label": "Enum UserRole (4 vai trò)"
+        },
+        {
+          "path": "lib/views/home/home_shell.dart",
+          "line": 98,
+          "end_line": 100,
+          "label": "Menu theo user.role"
+        }
+      ]
+    },
+    {
+      "id": "head",
+      "type": "external",
+      "label": "Trưởng bộ môn",
+      "sublabel": "head",
+      "icon": "person",
+      "pos": [
+        30,
+        196
+      ],
+      "size": [
+        130,
+        54
+      ],
+      "sources": [
+        {
+          "path": "lib/data/models/app_user.dart",
+          "line": 2,
+          "end_line": 6,
+          "label": "Enum UserRole (4 vai trò)"
+        }
+      ]
+    },
+    {
+      "id": "lecturer",
+      "type": "external",
+      "label": "Giảng viên",
+      "sublabel": "lecturer",
+      "icon": "person",
+      "pos": [
+        30,
+        266
+      ],
+      "size": [
+        130,
+        54
+      ],
+      "sources": [
+        {
+          "path": "lib/data/models/app_user.dart",
+          "line": 2,
+          "end_line": 6,
+          "label": "Enum UserRole (4 vai trò)"
+        }
+      ]
+    },
+    {
+      "id": "student",
+      "type": "external",
+      "label": "Sinh viên",
+      "sublabel": "student",
+      "icon": "person",
+      "pos": [
+        30,
+        336
+      ],
+      "size": [
+        130,
+        54
+      ],
+      "sources": [
+        {
+          "path": "lib/data/models/app_user.dart",
+          "line": 2,
+          "end_line": 6,
+          "label": "Enum UserRole (4 vai trò)"
+        }
+      ]
+    },
+    {
+      "id": "view",
+      "type": "frontend",
+      "label": "View",
+      "sublabel": "menu theo vai trò",
+      "pos": [
+        200,
+        118
+      ],
+      "size": [
+        150,
+        280
+      ],
+      "sources": [
+        {
+          "path": "lib/views/home/home_shell.dart",
+          "line": 97,
+          "end_line": 100,
+          "label": "_menuFor: chức năng theo vai trò"
+        },
+        {
+          "path": "lib/app/app.dart",
+          "line": 53,
+          "end_line": 57,
+          "label": "Routes splash/login/home"
+        },
+        {
+          "path": "lib/views/class_list_screen.dart",
+          "line": 18,
+          "end_line": 27,
+          "label": "Mỗi màn tự tạo ViewModel"
+        }
+      ]
+    },
+    {
+      "id": "vm",
+      "type": "frontend",
+      "label": "ViewModel",
+      "sublabel": "ChangeNotifier + Provider",
+      "pos": [
+        470,
+        226
+      ],
+      "size": [
+        160,
+        64
+      ],
+      "sources": [
+        {
+          "path": "lib/viewmodels/base_view_model.dart",
+          "line": 7,
+          "label": "BaseViewModel extends ChangeNotifier"
+        },
+        {
+          "path": "lib/viewmodels/auth_view_model.dart",
+          "line": 5,
+          "end_line": 25,
+          "label": "AuthViewModel dùng AuthRepository"
+        },
+        {
+          "path": "lib/app/app.dart",
+          "line": 36,
+          "end_line": 46,
+          "label": "MultiProvider cấp repository"
+        }
+      ]
+    },
+    {
+      "id": "authrepo",
+      "type": "backend",
+      "label": "AuthRepository",
+      "sublabel": "đăng nhập + hồ sơ vai trò",
+      "pos": [
+        760,
+        50
+      ],
+      "size": [
+        210,
+        64
+      ],
+      "sources": [
+        {
+          "path": "lib/data/repositories/auth_repository.dart",
+          "line": 16,
+          "end_line": 22,
+          "label": "signInWithEmailAndPassword"
+        },
+        {
+          "path": "lib/data/repositories/auth_repository.dart",
+          "line": 43,
+          "end_line": 49,
+          "label": "Đọc users/{uid}"
+        }
+      ]
+    },
+    {
+      "id": "datarepos",
+      "type": "backend",
+      "label": "Repository dữ liệu",
+      "sublabel": "academic · grade · user · application · notification",
+      "pos": [
+        760,
+        220
+      ],
+      "size": [
+        290,
+        76
+      ],
+      "sources": [
+        {
+          "path": "lib/app/app.dart",
+          "line": 38,
+          "end_line": 42,
+          "label": "5 repository nhận FirebaseFirestore"
+        },
+        {
+          "path": "lib/data/repositories/academic_repository.dart",
+          "line": 12,
+          "end_line": 22,
+          "label": "subjects, classes, sessions"
+        },
+        {
+          "path": "lib/data/repositories/grade_repository.dart",
+          "line": 8,
+          "end_line": 16,
+          "label": "grades, classes"
+        }
+      ]
+    },
+    {
+      "id": "domain",
+      "type": "backend",
+      "label": "Domain rules",
+      "sublabel": "Dart thuần, không I/O",
+      "pos": [
+        470,
+        400
+      ],
+      "size": [
+        160,
+        64
+      ],
+      "sources": [
+        {
+          "path": "lib/domain/attendance_rules.dart",
+          "line": 49,
+          "label": "canTakeAttendance"
+        },
+        {
+          "path": "lib/domain/grade_rules.dart",
+          "line": 57,
+          "label": "evaluate (kết quả môn)"
+        },
+        {
+          "path": "lib/domain/schedule_rules.dart",
+          "line": 24,
+          "label": "findRoomConflicts"
+        }
+      ]
+    },
+    {
+      "id": "models",
+      "type": "backend",
+      "label": "Models",
+      "sublabel": "7 model: AppUser, CourseClass…",
+      "pos": [
+        760,
+        400
+      ],
+      "size": [
+        210,
+        64
+      ],
+      "sources": [
+        {
+          "path": "lib/data/models/app_user.dart",
+          "line": 17,
+          "end_line": 45,
+          "label": "AppUser.fromMap"
+        },
+        {
+          "path": "lib/domain/attendance_rules.dart",
+          "line": 2,
+          "label": "Domain import ClassSession"
+        }
+      ]
+    },
+    {
+      "id": "auth",
+      "type": "security",
+      "label": "Firebase Auth",
+      "sublabel": "Email/Password",
+      "pos": [
+        1150,
+        50
+      ],
+      "size": [
+        230,
+        64
+      ],
+      "sources": [
+        {
+          "path": "firebase.json",
+          "line": 5,
+          "end_line": 7,
+          "label": "Bật provider emailPassword"
+        },
+        {
+          "path": "lib/main.dart",
+          "line": 12,
+          "end_line": 13,
+          "label": "Firebase.initializeApp + FirebaseAuth.instance"
+        },
+        {
+          "path": "lib/viewmodels/staff/staff_accounts_view_model.dart",
+          "line": 91,
+          "end_line": 107,
+          "label": "FirebaseApp phụ tạo tài khoản"
+        }
+      ]
+    },
+    {
+      "id": "firestore",
+      "type": "database",
+      "label": "Cloud Firestore",
+      "sublabel": "8 collection: users, classes…",
+      "pos": [
+        1150,
+        220
+      ],
+      "size": [
+        230,
+        76
+      ],
+      "sources": [
+        {
+          "path": "lib/core/constants.dart",
+          "line": 7,
+          "end_line": 16,
+          "label": "Tên 7 collection"
+        },
+        {
+          "path": "lib/data/repositories/user_repository.dart",
+          "line": 10,
+          "end_line": 21,
+          "label": "Collection userCodes"
+        },
+        {
+          "path": "lib/main.dart",
+          "line": 13,
+          "label": "FirebaseFirestore.instance"
+        }
+      ]
+    },
+    {
+      "id": "rules",
+      "type": "security",
+      "label": "Security Rules",
+      "sublabel": "firestore.rules · phân quyền theo role",
+      "pos": [
+        1150,
+        400
+      ],
+      "size": [
+        230,
+        64
+      ],
+      "sources": [
+        {
+          "path": "firebase/firestore.rules",
+          "line": 9,
+          "end_line": 23,
+          "label": "Hàm role(), isStaff(), isMember()"
+        },
+        {
+          "path": "firebase.json",
+          "line": 2,
+          "end_line": 4,
+          "label": "Trỏ tới firebase/firestore.rules"
+        }
+      ]
+    },
+    {
+      "id": "seed",
+      "type": "external",
+      "label": "tool/seed.dart",
+      "sublabel": "nạp dữ liệu mẫu",
+      "icon": "briefcase",
+      "pos": [
+        1520,
+        220
+      ],
+      "size": [
+        200,
+        64
+      ],
+      "sources": [
+        {
+          "path": "tool/seed.dart",
+          "line": 1,
+          "end_line": 11,
+          "label": "Mục đích, token admin"
+        },
+        {
+          "path": "tool/seed.dart",
+          "line": 345,
+          "end_line": 360,
+          "label": "Tạo tài khoản qua Identity Toolkit"
+        },
+        {
+          "path": "tool/seed.dart",
+          "line": 392,
+          "end_line": 397,
+          "label": "REST Firestore + Bearer admin"
+        }
+      ]
+    },
+    {
+      "id": "probe",
+      "type": "external",
+      "label": "tool/probe_rules.dart",
+      "sublabel": "thử quyền bằng REST",
+      "icon": "briefcase",
+      "pos": [
+        1520,
+        400
+      ],
+      "size": [
+        200,
+        64
+      ],
+      "sources": [
+        {
+          "path": "tool/probe_rules.dart",
+          "line": 1,
+          "end_line": 9,
+          "label": "Probe quyền trên Firebase thật"
+        },
+        {
+          "path": "tool/probe_rules.dart",
+          "line": 306,
+          "end_line": 322,
+          "label": "Đăng nhập lấy ID token"
+        },
+        {
+          "path": "tool/probe_rules.dart",
+          "line": 340,
+          "end_line": 352,
+          "label": "PATCH Firestore kèm ID token"
+        }
+      ]
+    }
+  ],
+  "boundaries": [
+    {
+      "kind": "region",
+      "label": "Ứng dụng Android (Flutter, MVVM)",
+      "wraps": [
+        "view",
+        "vm",
+        "authrepo",
+        "datarepos",
+        "domain",
+        "models"
+      ]
+    },
+    {
+      "kind": "region",
+      "label": "Firebase project",
+      "wraps": [
+        "auth",
+        "firestore",
+        "rules"
+      ]
+    }
+  ],
+  "connections": [
+    {
+      "id": "staff-to-view",
+      "from": "staff",
+      "to": "view",
+      "variant": "emphasis",
+      "fromSide": "top",
+      "toSide": "top"
+    },
+    {
+      "id": "head-to-view",
+      "from": "head",
+      "to": "view",
+      "variant": "emphasis"
+    },
+    {
+      "id": "lecturer-to-view",
+      "from": "lecturer",
+      "to": "view",
+      "variant": "emphasis"
+    },
+    {
+      "id": "student-to-view",
+      "from": "student",
+      "to": "view",
+      "variant": "emphasis",
+      "fromSide": "bottom",
+      "toSide": "bottom"
+    },
+    {
+      "id": "view-to-vm",
+      "from": "view",
+      "to": "vm",
+      "label": "Provider",
+      "variant": "emphasis"
+    },
+    {
+      "id": "vm-to-datarepos",
+      "from": "vm",
+      "to": "datarepos",
+      "label": "gọi",
+      "variant": "emphasis"
+    },
+    {
+      "id": "vm-to-authrepo",
+      "from": "vm",
+      "to": "authrepo",
+      "label": "đăng nhập",
+      "fromSide": "top",
+      "toSide": "left"
+    },
+    {
+      "id": "vm-to-domain",
+      "from": "vm",
+      "to": "domain",
+      "label": "quy tắc",
+      "fromSide": "bottom",
+      "toSide": "top"
+    },
+    {
+      "id": "domain-to-models",
+      "from": "domain",
+      "to": "models",
+      "label": "kiểu dữ liệu",
+      "variant": "dashed"
+    },
+    {
+      "id": "datarepos-to-models",
+      "from": "datarepos",
+      "to": "models",
+      "label": "Map ↔ model",
+      "variant": "dashed",
+      "fromSide": "bottom",
+      "toSide": "top"
+    },
+    {
+      "id": "datarepos-to-firestore",
+      "from": "datarepos",
+      "to": "firestore",
+      "label": "đọc / ghi",
+      "variant": "emphasis"
+    },
+    {
+      "id": "authrepo-to-auth",
+      "from": "authrepo",
+      "to": "auth",
+      "label": "Email/Password",
+      "variant": "security"
+    },
+    {
+      "id": "authrepo-to-firestore",
+      "from": "authrepo",
+      "to": "firestore",
+      "label": "users/{uid}",
+      "fromSide": "bottom",
+      "toSide": "top",
+      "via": [
+        [
+          865,
+          165
+        ],
+        [
+          1265,
+          165
+        ]
+      ]
+    },
+    {
+      "id": "rules-to-firestore",
+      "from": "rules",
+      "to": "firestore",
+      "label": "allow / deny theo role",
+      "variant": "security",
+      "fromSide": "top",
+      "toSide": "bottom"
+    },
+    {
+      "id": "seed-to-firestore",
+      "from": "seed",
+      "to": "firestore",
+      "label": "admin token",
+      "variant": "dashed"
+    },
+    {
+      "id": "seed-to-auth",
+      "from": "seed",
+      "to": "auth",
+      "label": "tạo tài khoản",
+      "variant": "dashed",
+      "fromSide": "top",
+      "toSide": "right"
+    },
+    {
+      "id": "probe-to-firestore",
+      "from": "probe",
+      "to": "firestore",
+      "label": "ID token",
+      "variant": "security",
+      "fromSide": "left",
+      "toSide": "right"
+    }
+  ],
+  "cards": [
+    {
+      "dot": "cyan",
+      "title": "MVVM + Provider",
+      "items": [
+        "MyFapApp cấp 5 repository và AuthViewModel qua MultiProvider",
+        "Mỗi màn tự tạo ViewModel bằng ChangeNotifierProvider",
+        "ViewModel gọi repository, không gọi Firestore trực tiếp"
+      ]
+    },
+    {
+      "dot": "emerald",
+      "title": "Firestore: 8 collection",
+      "items": [
+        "users, subjects, classes, sessions",
+        "grades, applications, notifications, userCodes",
+        "Rules đọc vai trò từ users/{uid}.role"
+      ]
+    },
+    {
+      "dot": "violet",
+      "title": "Mở tài khoản mới",
+      "items": [
+        "StaffAccountsViewModel tạo user bằng FirebaseApp phụ staff-provisioning",
+        "Phiên của cán bộ đào tạo không bị đăng xuất",
+        "Hồ sơ users và userCodes ghi chung một transaction"
+      ]
+    },
+    {
+      "dot": "amber",
+      "title": "Công cụ dev",
+      "items": [
+        "seed: token admin ghi Firestore, bỏ qua rules",
+        "probe_rules: ID token từng tài khoản, bị rules kiểm"
+      ]
+    }
+  ]
+}

@@ -1,0 +1,6 @@
+# Biên nhận kiểm tra do archify finalize sinh ra, tạo lại được
+*.finalize.json
+*.finalize-summary.json
+*.delivery.json
+*.browser-check.json
+visual-check/

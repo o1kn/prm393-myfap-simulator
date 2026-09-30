@@ -1,0 +1,413 @@
+{
+  "schema_version": 1,
+  "diagram_type": "dataflow",
+  "meta": {
+    "title": "Luồng dữ liệu: từ điểm thô đến kết quả môn học và bảng điểm",
+    "output": "docs/diagrams/07-tinh-ket-qua-mon-hoc/tinh-ket-qua-mon-hoc.html",
+    "quality_profile": "showcase",
+    "repository": {
+      "url": "https://github.com/o1kn/prm393-myfap-simulator.git",
+      "provider": "github",
+      "revision": "ebb3ec1846ee148af1249c60b99f1ce6301b5749"
+    },
+    "viewBox": [
+      900,
+      520
+    ]
+  },
+  "stages": [
+    {
+      "label": "Nguồn Firestore"
+    },
+    {
+      "label": "Chuẩn bị & tính điểm"
+    },
+    {
+      "label": "Luật qua môn"
+    },
+    {
+      "label": "Màn hình sinh viên"
+    }
+  ],
+  "nodes": [
+    {
+      "id": "subjects",
+      "type": "database",
+      "label": "subjects.components",
+      "sublabel": "name, weight, isFinal",
+      "tag": "cấu trúc điểm",
+      "stage": 0,
+      "row": 1,
+      "sources": [
+        {
+          "path": "lib/data/models/subject.dart",
+          "line": 1,
+          "end_line": 28,
+          "label": "GradeComponent"
+        },
+        {
+          "path": "lib/data/models/subject.dart",
+          "line": 50,
+          "label": "components"
+        }
+      ]
+    },
+    {
+      "id": "grades",
+      "type": "database",
+      "label": "grades.marks",
+      "sublabel": "điểm + published",
+      "tag": "GV nhập, duyệt",
+      "stage": 0,
+      "row": 0,
+      "sources": [
+        {
+          "path": "lib/data/models/grade_record.dart",
+          "line": 53,
+          "end_line": 58,
+          "label": "marks, published"
+        },
+        {
+          "path": "lib/data/repositories/grade_repository.dart",
+          "line": 24,
+          "end_line": 27,
+          "label": "publishedGradesOf"
+        }
+      ]
+    },
+    {
+      "id": "sessions",
+      "type": "database",
+      "label": "sessions.attendance",
+      "sublabel": "mã SV → present/absent",
+      "tag": "theo buổi học",
+      "stage": 0,
+      "row": 2,
+      "sources": [
+        {
+          "path": "lib/data/models/class_session.dart",
+          "line": 18,
+          "end_line": 20,
+          "label": "attendance trong buổi"
+        },
+        {
+          "path": "lib/data/models/class_session.dart",
+          "line": 63,
+          "end_line": 64,
+          "label": "statusOf"
+        }
+      ]
+    },
+    {
+      "id": "published",
+      "type": "security",
+      "label": "Chỉ điểm đã công bố",
+      "sublabel": "published == true",
+      "tag": "cổng công bố",
+      "stage": 1,
+      "row": 0,
+      "sources": [
+        {
+          "path": "lib/data/repositories/grade_repository.dart",
+          "line": 24,
+          "end_line": 27,
+          "label": "lọc published"
+        },
+        {
+          "path": "lib/viewmodels/student/results_view_model.dart",
+          "line": 46,
+          "end_line": 49,
+          "label": "records theo lớp"
+        }
+      ]
+    },
+    {
+      "id": "attsummary",
+      "type": "backend",
+      "label": "AttendanceSummary",
+      "sublabel": "total, present, absent",
+      "tag": "vắng % > 20%",
+      "stage": 1,
+      "row": 2,
+      "sources": [
+        {
+          "path": "lib/domain/attendance_rules.dart",
+          "line": 13,
+          "end_line": 32,
+          "label": "AttendanceSummary.of"
+        },
+        {
+          "path": "lib/domain/attendance_rules.dart",
+          "line": 41,
+          "end_line": 45,
+          "label": "absentRate, isBanned"
+        }
+      ]
+    },
+    {
+      "id": "average",
+      "type": "backend",
+      "label": "weightedAverage",
+      "sublabel": "Σ điểm × weight / 100",
+      "tag": "làm tròn 1 số",
+      "stage": 1,
+      "row": 1,
+      "sources": [
+        {
+          "path": "lib/domain/grade_rules.dart",
+          "line": 36,
+          "end_line": 46,
+          "label": "weightedAverage"
+        }
+      ]
+    },
+    {
+      "id": "evaluate",
+      "type": "backend",
+      "label": "evaluate()",
+      "sublabel": "TB ≥ 5, Final ≥ 4, dự thi",
+      "tag": "CourseResult",
+      "stage": 2,
+      "row": 1,
+      "sources": [
+        {
+          "path": "lib/domain/grade_rules.dart",
+          "line": 14,
+          "end_line": 16,
+          "label": "minFinalMark, minAverage"
+        },
+        {
+          "path": "lib/domain/grade_rules.dart",
+          "line": 57,
+          "end_line": 90,
+          "label": "evaluate"
+        },
+        {
+          "path": "lib/viewmodels/student/results_view_model.dart",
+          "line": 42,
+          "end_line": 67,
+          "label": "ResultsViewModel.load"
+        }
+      ]
+    },
+    {
+      "id": "gradescreen",
+      "type": "frontend",
+      "label": "Điểm học kỳ",
+      "sublabel": "điểm từng môn + lý do trượt",
+      "tag": "GradeReportScreen",
+      "stage": 3,
+      "row": 0,
+      "sources": [
+        {
+          "path": "lib/views/student/grade_report_screen.dart",
+          "line": 14,
+          "end_line": 45,
+          "label": "Điểm học kỳ"
+        }
+      ]
+    },
+    {
+      "id": "transcript",
+      "type": "frontend",
+      "label": "Bảng điểm",
+      "sublabel": "tín chỉ tích lũy",
+      "tag": "TranscriptScreen",
+      "stage": 3,
+      "row": 1,
+      "sources": [
+        {
+          "path": "lib/views/student/transcript_screen.dart",
+          "line": 38,
+          "end_line": 39,
+          "label": "Bảng điểm"
+        },
+        {
+          "path": "lib/viewmodels/student/results_view_model.dart",
+          "line": 88,
+          "end_line": 91,
+          "label": "passedCredits"
+        }
+      ]
+    },
+    {
+      "id": "attreport",
+      "type": "frontend",
+      "label": "Điểm danh",
+      "sublabel": "vắng %, buổi còn được vắng",
+      "tag": "AttendanceReportScreen",
+      "stage": 3,
+      "row": 2,
+      "sources": [
+        {
+          "path": "lib/views/student/attendance_report_screen.dart",
+          "line": 48,
+          "end_line": 56,
+          "label": "_remainingAbsent"
+        },
+        {
+          "path": "lib/viewmodels/student/attendance_report_view_model.dart",
+          "line": 49,
+          "end_line": 55,
+          "label": "summaryFor"
+        }
+      ]
+    }
+  ],
+  "flows": [
+    {
+      "id": "f-marks",
+      "from": "grades",
+      "to": "published",
+      "label": "marks",
+      "variant": "default",
+      "route": "straight"
+    },
+    {
+      "id": "f-components",
+      "from": "subjects",
+      "to": "average",
+      "label": "components",
+      "variant": "default",
+      "route": "straight"
+    },
+    {
+      "id": "f-sessions",
+      "from": "sessions",
+      "to": "attsummary",
+      "label": "attendance",
+      "variant": "default",
+      "route": "straight"
+    },
+    {
+      "id": "f-published-avg",
+      "from": "published",
+      "to": "average",
+      "label": "đã công bố",
+      "variant": "emphasis",
+      "route": "straight",
+      "labelAt": [
+        315,
+        214
+      ]
+    },
+    {
+      "id": "f-published-eval",
+      "from": "published",
+      "to": "evaluate",
+      "label": "marks + published",
+      "variant": "emphasis",
+      "fromSide": "right",
+      "toSide": "top",
+      "via": [
+        [
+          530,
+          157
+        ]
+      ],
+      "labelAt": [
+        450,
+        154
+      ]
+    },
+    {
+      "id": "f-isbanned",
+      "from": "attsummary",
+      "to": "evaluate",
+      "label": "isBanned",
+      "variant": "security",
+      "fromSide": "right",
+      "toSide": "bottom",
+      "via": [
+        [
+          530,
+          385
+        ]
+      ],
+      "labelAt": [
+        450,
+        382
+      ]
+    },
+    {
+      "id": "f-average",
+      "from": "average",
+      "to": "evaluate",
+      "label": "điểm TB",
+      "variant": "emphasis",
+      "route": "straight"
+    },
+    {
+      "id": "f-grade",
+      "from": "evaluate",
+      "to": "gradescreen",
+      "label": "điểm từng môn",
+      "variant": "default",
+      "fromSide": "right",
+      "toSide": "left",
+      "via": [
+        [
+          637.5,
+          271
+        ],
+        [
+          637.5,
+          157
+        ]
+      ],
+      "labelAt": [
+        637.5,
+        214
+      ]
+    },
+    {
+      "id": "f-transcript",
+      "from": "evaluate",
+      "to": "transcript",
+      "label": "Σ tín chỉ Passed",
+      "variant": "emphasis",
+      "route": "straight",
+      "labelAt": [
+        637.5,
+        298
+      ]
+    },
+    {
+      "id": "f-attreport",
+      "from": "attsummary",
+      "to": "attreport",
+      "label": "absent/total → còn được vắng",
+      "variant": "dashed",
+      "route": "bottom-channel",
+      "fromSide": "bottom",
+      "toSide": "bottom"
+    }
+  ],
+  "cards": [
+    {
+      "dot": "emerald",
+      "title": "Điểm môn học",
+      "items": [
+        "Chỉ tính grades có published = true; chưa công bố thì môn ở trạng thái Đang học",
+        "Điểm TB = Σ(điểm × weight) / 100, làm tròn 1 chữ số; thiếu đầu điểm thì chưa có TB"
+      ]
+    },
+    {
+      "dot": "rose",
+      "title": "Luật qua môn (Passed)",
+      "items": [
+        "Vắng hơn 20% tổng số buổi → Not passed dù điểm đủ",
+        "Đầu điểm isFinal < 4 hoặc TB < 5 → Not passed, kèm lý do",
+        "Còn lại → Passed, tín chỉ được cộng vào Bảng điểm"
+      ]
+    },
+    {
+      "dot": "amber",
+      "title": "Điểm danh",
+      "items": [
+        "Mẫu số gồm cả buổi chưa diễn ra của sinh viên (studentIds chứa uid)",
+        "Màn Điểm danh dùng cùng AttendanceSummary để báo số buổi còn được vắng"
+      ]
+    }
+  ]
+}

@@ -22,11 +22,9 @@ Luồng gọi: màn hình → ViewModel → Repository → Firebase.
 
 **Trong app: MVVM với Provider.**
 
-```
-View (Widget)  ──gọi hàm──▶  ViewModel (ChangeNotifier)  ──▶  Repository  ──▶  Firebase Auth / Cloud Firestore
-     ▲                              │                              │
-     └──── notifyListeners ─────────┘                    domain/ (quy tắc nghiệp vụ, Dart thuần)
-```
+![Kiến trúc hệ thống](docs/diagrams/01-kien-truc-he-thong/kien-truc-he-thong.png)
+
+Bản tương tác (phóng to, xem nguồn từng khối): [`kien-truc-he-thong.html`](docs/diagrams/01-kien-truc-he-thong/kien-truc-he-thong.html).
 
 | Tầng | Thư mục | Phụ thuộc vào |
 |---|---|---|
@@ -102,7 +100,56 @@ Quan hệ: `subjects` 1–n `classes`; `classes` 1–n `sessions`, 1–n `grades
 nên sửa app hay gọi thẳng API cũng không vượt quyền được. Ví dụ: sinh viên không đọc được điểm của người khác, giảng viên
 không sửa điểm lớp mình không dạy, trưởng bộ môn AI không duyệt lớp bộ môn SE.
 
-## 6. Cài đặt và chạy
+## 6. Sơ đồ luồng xử lý
+
+Mỗi sơ đồ có bản ảnh (bên dưới) và bản HTML tương tác trong cùng thư mục `docs/diagrams/` (mở bằng trình duyệt: phóng to,
+chạm vào khối để xem file mã nguồn tương ứng).
+
+### 6.1 Quy trình đào tạo (4 vai trò)
+
+Cán bộ ĐT mở lớp (chặn trùng mã lớp, trùng phòng + slot + ngày) → trưởng BM phân công GV cùng bộ môn → GV điểm danh (chỉ
+buổi đã tới, lớp chưa công bố), nhập điểm, gửi duyệt khi đủ đầu điểm → trưởng BM công bố hoặc trả lại kèm lý do → sinh
+viên xem điểm, kết quả Passed / Not passed.
+
+![Quy trình đào tạo](docs/diagrams/02-quy-trinh-dao-tao/quy-trinh-dao-tao.png)
+
+### 6.2 Nhập và duyệt điểm (tuần tự)
+
+Các lời gọi giữa màn hình, ViewModel, Repository và Firestore; mỗi bước ghi đều qua Security Rules. Có nhánh trả lại
+(`returned` + `headNote`) và bước sinh viên chỉ đọc được điểm đã công bố.
+
+![Nhập và duyệt điểm](docs/diagrams/03-nhap-va-duyet-diem/nhap-va-duyet-diem.png)
+
+### 6.3 Điểm danh (tuần tự)
+
+Giảng viên chọn buổi trong lịch tuần, điểm danh, lưu vào `sessions.attendance`; rules chỉ cho đúng GV của buổi, lớp chưa
+công bố, đúng sinh viên trong buổi. Có hộp thoại khi rời màn còn thay đổi chưa lưu. Sinh viên xem tỉ lệ vắng và cảnh
+báo khi vượt 20%.
+
+![Điểm danh](docs/diagrams/04-diem-danh/diem-danh.png)
+
+### 6.4 Trạng thái bảng điểm của lớp
+
+`draft` → `submitted` → `published` (kết thúc), hoặc `submitted` → `returned` → `submitted`. Mỗi trạng thái ghi rõ cho
+phép / khoá việc gì.
+
+![Trạng thái bảng điểm](docs/diagrams/05-trang-thai-bang-diem/trang-thai-bang-diem.png)
+
+### 6.5 Vòng đời đơn từ
+
+Sinh viên gửi đơn hợp lệ → `processing` → cán bộ ĐT xử lý trong transaction → `approved` hoặc `rejected` (bắt buộc có lý
+do). Đơn đã xử lý không xử lý lại.
+
+![Vòng đời đơn từ](docs/diagrams/06-vong-doi-don-tu/vong-doi-don-tu.png)
+
+### 6.6 Tính kết quả môn học (luồng dữ liệu)
+
+Cấu trúc điểm, điểm đã công bố và điểm danh → tỉ lệ vắng + điểm trung bình có trọng số → luật qua môn → màn Điểm học kỳ,
+Bảng điểm (tín chỉ tích luỹ), Điểm danh (số buổi còn được vắng).
+
+![Tính kết quả môn học](docs/diagrams/07-tinh-ket-qua-mon-hoc/tinh-ket-qua-mon-hoc.png)
+
+## 7. Cài đặt và chạy
 
 Firebase đã cấu hình sẵn: project `prm393-myfap-sim`, `android/app/google-services.json` có trong repo.
 
@@ -125,7 +172,7 @@ Mật khẩu chung: `Myfap@2026`
 | Giảng viên | sonnt@myfap.vn (SE), hunglv@myfap.vn (AI) |
 | Sinh viên | he170001@myfap.vn … he170005@myfap.vn |
 
-## 7. Kiểm thử
+## 8. Kiểm thử
 
 ### Test tự động
 
@@ -187,7 +234,7 @@ Chạy trên APK release với Firebase thật (30/09/2026). Ảnh chụp trong 
 | HE170004 | 6 / 5 / 7 / 4.5 | 5.7 | Passed |
 | HE170005 | 5 / 4 / 5 / 5 | 4.8 | Not passed – TB dưới 5 |
 
-## 8. Giới hạn
+## 9. Giới hạn
 
 - Chỉ hỗ trợ Android.
 - Rules không kiểm tra được "chỉ ghi danh vào buổi chưa tới" (ngày buổi học lưu dạng chuỗi); phần này do app kiểm tra.

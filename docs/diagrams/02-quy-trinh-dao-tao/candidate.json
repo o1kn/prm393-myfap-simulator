@@ -1,0 +1,580 @@
+{
+  "schema_version": 2,
+  "diagram_type": "workflow",
+  "meta": {
+    "title": "Quy trình đào tạo: từ mở lớp đến kết quả môn học",
+    "animation": "none",
+    "quality_profile": "showcase",
+    "output": "docs/diagrams/02-quy-trinh-dao-tao/quy-trinh-dao-tao.html",
+    "repository": {
+      "url": "https://github.com/o1kn/prm393-myfap-simulator.git",
+      "provider": "github",
+      "link_mode": "web",
+      "revision": "ebb3ec1846ee148af1249c60b99f1ce6301b5749"
+    }
+  },
+  "lanes": [
+    {
+      "id": "staff",
+      "label": "Cán bộ quản lý đào tạo"
+    },
+    {
+      "id": "lecturer",
+      "label": "Giảng viên"
+    },
+    {
+      "id": "head",
+      "label": "Trưởng bộ môn"
+    },
+    {
+      "id": "student",
+      "label": "Sinh viên"
+    }
+  ],
+  "phases": [
+    {
+      "id": "prepare",
+      "label": "1. Mở lớp và phân công",
+      "fromCol": 0,
+      "toCol": 1
+    },
+    {
+      "id": "teach",
+      "label": "2. Dạy học và nhập điểm",
+      "fromCol": 2,
+      "toCol": 3,
+      "variant": "emphasis"
+    },
+    {
+      "id": "result",
+      "label": "3. Duyệt, công bố, kết quả",
+      "fromCol": 4,
+      "toCol": 5,
+      "variant": "dashed"
+    }
+  ],
+  "mainPath": [
+    "open",
+    "check_conflict",
+    "assign",
+    "enter_marks",
+    "check_complete",
+    "review",
+    "view_grades",
+    "check_pass",
+    "passed"
+  ],
+  "nodes": [
+    {
+      "id": "open",
+      "lane": "staff",
+      "col": 0,
+      "type": "frontend",
+      "yOffset": -45,
+      "width": 150,
+      "label": "Mở lớp + xếp lịch",
+      "sublabel": "môn, mã lớp, SV, thứ, slot",
+      "sources": [
+        {
+          "path": "lib/viewmodels/staff/create_class_view_model.dart",
+          "line": 58,
+          "end_line": 78,
+          "label": "create()"
+        },
+        {
+          "path": "README.md",
+          "line": 79,
+          "label": "Vai trò cán bộ ĐT"
+        }
+      ]
+    },
+    {
+      "id": "check_conflict",
+      "lane": "staff",
+      "col": 0,
+      "type": "security",
+      "yOffset": 45,
+      "width": 150,
+      "label": "Trùng mã / phòng?",
+      "sublabel": "mã lớp; phòng+slot+ngày",
+      "sources": [
+        {
+          "path": "lib/data/repositories/academic_repository.dart",
+          "line": 74,
+          "end_line": 109,
+          "label": "createClassWithSchedule"
+        },
+        {
+          "path": "lib/domain/schedule_rules.dart",
+          "line": 22,
+          "end_line": 37,
+          "label": "findRoomConflicts"
+        }
+      ]
+    },
+    {
+      "id": "reject",
+      "lane": "staff",
+      "col": 1,
+      "type": "security",
+      "yOffset": 45,
+      "width": 150,
+      "label": "Từ chối mở lớp",
+      "sublabel": "báo lỗi, không ghi lớp",
+      "sources": [
+        {
+          "path": "lib/data/repositories/academic_repository.dart",
+          "line": 80,
+          "end_line": 82,
+          "label": "trùng mã lớp"
+        },
+        {
+          "path": "lib/data/repositories/academic_repository.dart",
+          "line": 109,
+          "label": "trùng phòng"
+        }
+      ]
+    },
+    {
+      "id": "assign",
+      "lane": "head",
+      "col": 1,
+      "type": "backend",
+      "width": 150,
+      "label": "Phân công giảng viên",
+      "sublabel": "GV cùng bộ môn với lớp",
+      "sources": [
+        {
+          "path": "lib/data/repositories/academic_repository.dart",
+          "line": 131,
+          "end_line": 144,
+          "label": "assignLecturer"
+        },
+        {
+          "path": "lib/viewmodels/head/assignment_view_model.dart",
+          "line": 25,
+          "end_line": 28,
+          "label": "assign()"
+        },
+        {
+          "path": "firebase/firestore.rules",
+          "line": 89,
+          "end_line": 95,
+          "label": "rules phân công"
+        }
+      ]
+    },
+    {
+      "id": "pick_session",
+      "lane": "lecturer",
+      "col": 2,
+      "type": "frontend",
+      "yOffset": -45,
+      "width": 150,
+      "label": "Chọn buổi học",
+      "sublabel": "lịch dạy của lớp",
+      "sources": [
+        {
+          "path": "lib/viewmodels/lecturer/take_attendance_view_model.dart",
+          "line": 64,
+          "end_line": 84,
+          "label": "load()"
+        }
+      ]
+    },
+    {
+      "id": "check_attendance",
+      "lane": "lecturer",
+      "col": 3,
+      "type": "security",
+      "yOffset": -45,
+      "width": 150,
+      "label": "Được điểm danh?",
+      "sublabel": "ngày ≤ nay, chưa công bố",
+      "sources": [
+        {
+          "path": "lib/domain/attendance_rules.dart",
+          "line": 48,
+          "end_line": 52,
+          "label": "canTakeAttendance"
+        },
+        {
+          "path": "lib/viewmodels/lecturer/take_attendance_view_model.dart",
+          "line": 35,
+          "end_line": 51,
+          "label": "editable"
+        },
+        {
+          "path": "firebase/firestore.rules",
+          "line": 123,
+          "end_line": 130,
+          "label": "rules điểm danh"
+        }
+      ]
+    },
+    {
+      "id": "save_attendance",
+      "lane": "lecturer",
+      "col": 4,
+      "type": "database",
+      "yOffset": -45,
+      "width": 150,
+      "label": "Lưu điểm danh",
+      "sublabel": "sessions.attendance",
+      "sources": [
+        {
+          "path": "lib/viewmodels/lecturer/take_attendance_view_model.dart",
+          "line": 94,
+          "end_line": 104,
+          "label": "save()"
+        },
+        {
+          "path": "lib/data/repositories/academic_repository.dart",
+          "line": 289,
+          "end_line": 294,
+          "label": "saveAttendance"
+        }
+      ]
+    },
+    {
+      "id": "enter_marks",
+      "lane": "lecturer",
+      "col": 3,
+      "type": "frontend",
+      "yOffset": 45,
+      "width": 150,
+      "label": "Nhập điểm, lưu nháp",
+      "sublabel": "draft hoặc returned, 0–10",
+      "sources": [
+        {
+          "path": "lib/viewmodels/grade_sheet_view_model.dart",
+          "line": 93,
+          "end_line": 113,
+          "label": "setMark"
+        },
+        {
+          "path": "lib/domain/grade_rules.dart",
+          "line": 28,
+          "end_line": 34,
+          "label": "validateMark"
+        },
+        {
+          "path": "lib/viewmodels/grade_sheet_view_model.dart",
+          "line": 128,
+          "label": "saveDraft"
+        }
+      ]
+    },
+    {
+      "id": "check_complete",
+      "lane": "lecturer",
+      "col": 4,
+      "type": "security",
+      "yOffset": 45,
+      "width": 150,
+      "label": "Đủ đầu điểm?",
+      "sublabel": "mọi SV, mọi thành phần",
+      "sources": [
+        {
+          "path": "lib/viewmodels/grade_sheet_view_model.dart",
+          "line": 130,
+          "end_line": 144,
+          "label": "submit()"
+        },
+        {
+          "path": "lib/domain/grade_rules.dart",
+          "line": 48,
+          "end_line": 50,
+          "label": "isComplete"
+        },
+        {
+          "path": "lib/data/repositories/grade_repository.dart",
+          "line": 32,
+          "end_line": 49,
+          "label": "saveGrades"
+        }
+      ]
+    },
+    {
+      "id": "review",
+      "lane": "head",
+      "col": 4,
+      "type": "security",
+      "width": 150,
+      "label": "Duyệt bảng điểm",
+      "sublabel": "chỉ lớp đang chờ duyệt",
+      "sources": [
+        {
+          "path": "lib/viewmodels/grade_sheet_view_model.dart",
+          "line": 173,
+          "end_line": 187,
+          "label": "publish / returnToLecturer"
+        },
+        {
+          "path": "lib/data/repositories/grade_repository.dart",
+          "line": 51,
+          "end_line": 68,
+          "label": "publish / returnToLecturer"
+        },
+        {
+          "path": "firebase/firestore.rules",
+          "line": 96,
+          "end_line": 100,
+          "label": "rules duyệt"
+        }
+      ]
+    },
+    {
+      "id": "view_grades",
+      "lane": "student",
+      "col": 4,
+      "type": "frontend",
+      "width": 150,
+      "label": "Xem điểm đã công bố",
+      "sublabel": "chỉ bản ghi published",
+      "sources": [
+        {
+          "path": "lib/viewmodels/student/results_view_model.dart",
+          "line": 42,
+          "end_line": 67,
+          "label": "load()"
+        },
+        {
+          "path": "lib/data/repositories/grade_repository.dart",
+          "line": 23,
+          "end_line": 30,
+          "label": "publishedGradesOf"
+        }
+      ]
+    },
+    {
+      "id": "check_pass",
+      "lane": "student",
+      "col": 5,
+      "type": "security",
+      "width": 150,
+      "label": "Đủ điều kiện qua môn?",
+      "sublabel": "TB≥5, Final≥4, vắng≤20%",
+      "sources": [
+        {
+          "path": "lib/domain/grade_rules.dart",
+          "line": 52,
+          "end_line": 89,
+          "label": "evaluate"
+        },
+        {
+          "path": "lib/domain/attendance_rules.dart",
+          "line": 41,
+          "end_line": 45,
+          "label": "isBanned"
+        }
+      ]
+    },
+    {
+      "id": "passed",
+      "lane": "student",
+      "col": 5,
+      "type": "backend",
+      "yOffset": -90,
+      "icon": "success",
+      "width": 150,
+      "label": "Passed",
+      "sublabel": "qua môn",
+      "sources": [
+        {
+          "path": "lib/domain/grade_rules.dart",
+          "line": 89,
+          "label": "CourseStatus.passed"
+        }
+      ]
+    },
+    {
+      "id": "not_passed",
+      "lane": "student",
+      "col": 5,
+      "type": "security",
+      "yOffset": 90,
+      "icon": "failure",
+      "width": 150,
+      "label": "Not passed",
+      "sublabel": "kèm lý do hiển thị",
+      "sources": [
+        {
+          "path": "lib/domain/grade_rules.dart",
+          "line": 63,
+          "end_line": 88,
+          "label": "các nhánh Not passed"
+        }
+      ]
+    }
+  ],
+  "edges": [
+    {
+      "id": "e-open-check",
+      "from": "open",
+      "to": "check_conflict",
+      "variant": "emphasis",
+      "fromSide": "bottom",
+      "toSide": "top"
+    },
+    {
+      "id": "e-conflict-reject",
+      "from": "check_conflict",
+      "to": "reject",
+      "label": "trùng",
+      "variant": "security",
+      "role": "error",
+      "fromSide": "right",
+      "toSide": "left"
+    },
+    {
+      "id": "e-conflict-assign",
+      "from": "check_conflict",
+      "to": "assign",
+      "label": "hợp lệ",
+      "variant": "emphasis",
+      "fromSide": "bottom",
+      "toSide": "left"
+    },
+    {
+      "id": "e-assign-pick",
+      "from": "assign",
+      "to": "pick_session",
+      "label": "giao lớp",
+      "variant": "default"
+    },
+    {
+      "id": "e-assign-enter",
+      "from": "assign",
+      "to": "enter_marks",
+      "label": "giao lớp",
+      "variant": "emphasis",
+      "fromSide": "right",
+      "toSide": "left"
+    },
+    {
+      "id": "e-pick-check",
+      "from": "pick_session",
+      "to": "check_attendance",
+      "variant": "default"
+    },
+    {
+      "id": "e-attendance-block",
+      "from": "check_attendance",
+      "to": "pick_session",
+      "label": "chưa tới ngày / đã công bố: chỉ xem",
+      "variant": "security",
+      "role": "return",
+      "fromSide": "top",
+      "toSide": "top",
+      "route": "up-channel"
+    },
+    {
+      "id": "e-attendance-save",
+      "from": "check_attendance",
+      "to": "save_attendance",
+      "label": "được",
+      "variant": "default"
+    },
+    {
+      "id": "e-enter-check",
+      "from": "enter_marks",
+      "to": "check_complete",
+      "variant": "emphasis"
+    },
+    {
+      "id": "e-complete-back",
+      "from": "check_complete",
+      "to": "enter_marks",
+      "label": "thiếu: nhập tiếp",
+      "variant": "security",
+      "role": "return",
+      "fromSide": "top",
+      "toSide": "top"
+    },
+    {
+      "id": "e-complete-review",
+      "from": "check_complete",
+      "to": "review",
+      "label": "đủ: gửi duyệt",
+      "variant": "emphasis",
+      "fromSide": "bottom",
+      "toSide": "top"
+    },
+    {
+      "id": "e-review-return",
+      "from": "review",
+      "to": "enter_marks",
+      "label": "trả lại + lý do",
+      "variant": "security",
+      "role": "return",
+      "fromSide": "left",
+      "toSide": "bottom"
+    },
+    {
+      "id": "e-review-publish",
+      "from": "review",
+      "to": "view_grades",
+      "label": "công bố",
+      "variant": "emphasis",
+      "fromSide": "bottom",
+      "toSide": "top"
+    },
+    {
+      "id": "e-view-check",
+      "from": "view_grades",
+      "to": "check_pass",
+      "variant": "emphasis",
+      "fromSide": "right",
+      "toSide": "left"
+    },
+    {
+      "id": "e-pass-yes",
+      "from": "check_pass",
+      "to": "passed",
+      "label": "đủ",
+      "variant": "emphasis",
+      "fromSide": "top",
+      "toSide": "bottom"
+    },
+    {
+      "id": "e-pass-no",
+      "from": "check_pass",
+      "to": "not_passed",
+      "label": "thiếu",
+      "variant": "security",
+      "role": "error",
+      "fromSide": "bottom",
+      "toSide": "top"
+    }
+  ],
+  "cards": [
+    {
+      "dot": "cyan",
+      "title": "Trạng thái bảng điểm của lớp",
+      "items": [
+        "draft → submitted khi giảng viên gửi duyệt; sau đó giảng viên không sửa được",
+        "submitted → published (công bố) hoặc returned (trả lại kèm lý do)",
+        "returned: giảng viên sửa rồi gửi lại, vòng lặp đến khi được công bố"
+      ]
+    },
+    {
+      "dot": "rose",
+      "title": "Các cổng kiểm tra nghiệp vụ",
+      "items": [
+        "Mở lớp: mã dạng SE1943, không trùng mã trong kỳ, không trùng phòng + slot + ngày",
+        "Điểm danh: chỉ buổi đã tới ngày và lớp chưa công bố điểm",
+        "Gửi duyệt: mọi sinh viên đủ mọi đầu điểm",
+        "Passed: trung bình ≥ 5, Final Exam ≥ 4, vắng ≤ 20% tổng số buổi"
+      ]
+    },
+    {
+      "dot": "amber",
+      "title": "Phân quyền trên máy chủ",
+      "items": [
+        "Trưởng bộ môn chỉ phân công và duyệt lớp, giảng viên cùng bộ môn",
+        "Sinh viên chỉ đọc được điểm đã công bố (firestore.rules)"
+      ]
+    }
+  ]
+}
