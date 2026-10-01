@@ -115,18 +115,27 @@ viên xem điểm, kết quả Passed / Not passed.
 
 ### 6.2 Nhập và duyệt điểm (tuần tự)
 
-Các lời gọi giữa màn hình, ViewModel, Repository và Firestore; mỗi bước ghi đều qua Security Rules. Có nhánh trả lại
-(`returned` + `headNote`) và bước sinh viên chỉ đọc được điểm đã công bố.
+Các lời gọi giữa màn hình (View + ViewModel), Repository và Firestore; mỗi bước ghi đều qua Security Rules.
 
-![Nhập và duyệt điểm](docs/diagrams/03-nhap-va-duyet-diem/nhap-va-duyet-diem.png)
+**a) Giảng viên nhập điểm và gửi duyệt.** Lưu nháp giữ nguyên trạng thái lớp; gửi duyệt chuyển lớp sang `submitted`.
+
+![Giảng viên nhập điểm và gửi duyệt](docs/diagrams/03a-nhap-diem-gui-duyet/nhap-diem-gui-duyet.png)
+
+**b) Trưởng bộ môn công bố hoặc trả lại; sinh viên xem điểm.** Trưởng BM chọn **một trong hai** nhánh; sinh viên chỉ
+đọc được điểm đã công bố.
+
+![Công bố / trả lại, sinh viên xem điểm](docs/diagrams/03b-cong-bo-tra-lai/cong-bo-tra-lai.png)
 
 ### 6.3 Điểm danh (tuần tự)
 
-Giảng viên chọn buổi trong lịch tuần, điểm danh, lưu vào `sessions.attendance`; rules chỉ cho đúng GV của buổi, lớp chưa
-công bố, đúng sinh viên trong buổi. Có hộp thoại khi rời màn còn thay đổi chưa lưu. Sinh viên xem tỉ lệ vắng và cảnh
-báo khi vượt 20%.
+**a) Giảng viên điểm danh.** Chọn buổi trong lịch tuần, điểm danh, lưu vào `sessions.attendance`; rules chỉ cho đúng GV
+của lớp, lớp chưa công bố, đúng sinh viên trong buổi. Có hộp thoại khi rời màn còn thay đổi chưa lưu.
 
-![Điểm danh](docs/diagrams/04-diem-danh/diem-danh.png)
+![Giảng viên điểm danh](docs/diagrams/04a-gv-diem-danh/gv-diem-danh.png)
+
+**b) Sinh viên xem điểm danh.** Tính tỉ lệ vắng từng môn, cảnh báo khi vượt 20%.
+
+![Sinh viên xem điểm danh](docs/diagrams/04b-sv-xem-diem-danh/sv-xem-diem-danh.png)
 
 ### 6.4 Trạng thái bảng điểm của lớp
 

@@ -1,0 +1,251 @@
+{
+  "schema_version": 1,
+  "diagram_type": "sequence",
+  "meta": {
+    "title": "Sinh viên xem điểm danh",
+    "output": "docs/diagrams/04b-sv-xem-diem-danh/sv-xem-diem-danh.html",
+    "locale": "vi",
+    "column_fit": "spread",
+    "quality_profile": "showcase",
+    "repository": {
+      "url": "https://github.com/o1kn/prm393-myfap-simulator.git",
+      "provider": "github",
+      "revision": "ebb3ec1846ee148af1249c60b99f1ce6301b5749"
+    },
+    "legend": {
+      "mode": "auto",
+      "entries": {
+        "default": {
+          "label": "Lời gọi"
+        },
+        "emphasis": {
+          "label": "Luồng chính"
+        },
+        "return": {
+          "label": "Trả về"
+        },
+        "security": {
+          "label": "Kiểm tra Rules"
+        },
+        "dashed": {
+          "label": "Nhánh tuỳ chọn / lỗi"
+        }
+      }
+    },
+    "viewBox": [
+      920,
+      570
+    ]
+  },
+  "participants": [
+    {
+      "id": "student",
+      "type": "external",
+      "label": "Sinh viên",
+      "sublabel": "student",
+      "sources": [
+        {
+          "path": "lib/views/student/attendance_report_screen.dart",
+          "line": 39,
+          "end_line": 43,
+          "label": "tone theo tỉ lệ vắng"
+        }
+      ]
+    },
+    {
+      "id": "rvm",
+      "type": "frontend",
+      "label": "Màn hình SV",
+      "sublabel": "View + VM",
+      "sources": [
+        {
+          "path": "lib/viewmodels/student/attendance_report_view_model.dart",
+          "line": 23,
+          "end_line": 36,
+          "label": "load()"
+        },
+        {
+          "path": "lib/views/student/attendance_report_screen.dart",
+          "line": 339,
+          "end_line": 350,
+          "label": "nhãn Cấm thi"
+        }
+      ]
+    },
+    {
+      "id": "repo",
+      "type": "backend",
+      "label": "Repository",
+      "sublabel": "repository",
+      "sources": [
+        {
+          "path": "lib/data/repositories/academic_repository.dart",
+          "line": 242,
+          "end_line": 246,
+          "label": "sessionsOfStudent/Lecturer"
+        },
+        {
+          "path": "lib/data/repositories/academic_repository.dart",
+          "line": 289,
+          "end_line": 294,
+          "label": "saveAttendance"
+        }
+      ]
+    },
+    {
+      "id": "fs",
+      "type": "database",
+      "label": "Firestore + Rules",
+      "sublabel": "sessions",
+      "sources": [
+        {
+          "path": "lib/data/models/class_session.dart",
+          "line": 54,
+          "end_line": 55,
+          "label": "attendance: uid → status"
+        },
+        {
+          "path": "firebase/firestore.rules",
+          "line": 113,
+          "end_line": 129,
+          "label": "read / update sessions"
+        }
+      ]
+    },
+    {
+      "id": "summary",
+      "type": "backend",
+      "label": "Tổng hợp",
+      "sublabel": "domain",
+      "sources": [
+        {
+          "path": "lib/domain/attendance_rules.dart",
+          "line": 13,
+          "end_line": 32,
+          "label": "AttendanceSummary.of"
+        },
+        {
+          "path": "lib/domain/attendance_rules.dart",
+          "line": 41,
+          "end_line": 45,
+          "label": "absentRate / isBanned"
+        }
+      ]
+    }
+  ],
+  "segments": [
+    {
+      "from": 162,
+      "to": 316,
+      "label": "1. Tải các buổi học của sinh viên"
+    },
+    {
+      "from": 348,
+      "to": 446,
+      "label": "2. Tính tỉ lệ vắng"
+    }
+  ],
+  "messages": [
+    {
+      "id": "open-report",
+      "from": "student",
+      "to": "rvm",
+      "y": 190,
+      "label": "mở Điểm danh, chọn lớp môn",
+      "variant": "default"
+    },
+    {
+      "id": "sessions-of-student",
+      "from": "rvm",
+      "to": "repo",
+      "y": 218,
+      "label": "load(): classesOfStudent, sessionsOfStudent(uid)",
+      "variant": "default"
+    },
+    {
+      "id": "student-query",
+      "from": "repo",
+      "to": "fs",
+      "y": 246,
+      "label": "sessions where studentIds array-contains uid",
+      "variant": "default"
+    },
+    {
+      "id": "read-check",
+      "from": "fs",
+      "to": "repo",
+      "y": 274,
+      "label": "Rules: uid ∈ resource.studentIds → cho đọc",
+      "variant": "security"
+    },
+    {
+      "id": "student-list",
+      "from": "repo",
+      "to": "rvm",
+      "y": 302,
+      "label": "List<ClassSession> kèm attendance",
+      "variant": "return"
+    },
+    {
+      "id": "summary-of",
+      "from": "rvm",
+      "to": "summary",
+      "y": 376,
+      "label": "AttendanceSummary.of(buổi của lớp, uid)",
+      "variant": "default"
+    },
+    {
+      "id": "summary-result",
+      "from": "summary",
+      "to": "rvm",
+      "y": 404,
+      "label": "absentRate = absent / total",
+      "variant": "return"
+    },
+    {
+      "id": "show-rate",
+      "from": "rvm",
+      "to": "student",
+      "y": 432,
+      "label": "% vắng; absentRate > 0.2 → nhãn 'Cấm thi'",
+      "variant": "emphasis"
+    }
+  ],
+  "activations": [
+    {
+      "participant": "rvm",
+      "from": 185,
+      "to": 437,
+      "type": "frontend"
+    },
+    {
+      "participant": "repo",
+      "from": 213,
+      "to": 307,
+      "type": "backend"
+    },
+    {
+      "participant": "fs",
+      "from": 241,
+      "to": 279,
+      "type": "database"
+    },
+    {
+      "participant": "summary",
+      "from": 371,
+      "to": 409,
+      "type": "backend"
+    }
+  ],
+  "cards": [
+    {
+      "dot": "amber",
+      "title": "Sinh viên xem kết quả",
+      "items": [
+        "Đọc sessions theo studentIds array-contains uid; Rules cho đọc buổi có uid trong studentIds",
+        "absentRate = absent / total, total gồm cả buổi chưa diễn ra",
+        "isBanned khi absentRate > maxAbsentRate (0.2): màn hình hiện nhãn 'Cấm thi'"
+      ]
+    }
+  ]
+}

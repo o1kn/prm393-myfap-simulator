@@ -1,0 +1,350 @@
+{
+  "schema_version": 1,
+  "diagram_type": "sequence",
+  "meta": {
+    "title": "Trưởng bộ môn công bố / trả lại, sinh viên xem điểm",
+    "output": "docs/diagrams/03b-cong-bo-tra-lai/cong-bo-tra-lai.html",
+    "column_fit": "spread",
+    "quality_profile": "showcase",
+    "repository": {
+      "url": "https://github.com/o1kn/prm393-myfap-simulator.git",
+      "provider": "github",
+      "revision": "ebb3ec1846ee148af1249c60b99f1ce6301b5749"
+    },
+    "legend": {
+      "mode": "auto",
+      "entries": {
+        "default": {
+          "label": "Gọi / truy vấn"
+        },
+        "emphasis": {
+          "label": "Hành động chính"
+        },
+        "security": {
+          "label": "Kiểm tra Security Rules"
+        },
+        "dashed": {
+          "label": "Nhánh thay thế (trả lại)"
+        },
+        "return": {
+          "label": "Kết quả trả về"
+        }
+      }
+    }
+  },
+  "participants": [
+    {
+      "id": "head",
+      "type": "external",
+      "label": "Trưởng bộ môn",
+      "sublabel": "head",
+      "sources": [
+        {
+          "path": "lib/views/grade_sheet_screen.dart",
+          "line": 648,
+          "end_line": 687,
+          "label": "Nút Trả lại / Công bố"
+        }
+      ]
+    },
+    {
+      "id": "ui",
+      "type": "frontend",
+      "label": "Màn hình",
+      "sublabel": "+ ViewModel",
+      "sources": [
+        {
+          "path": "lib/viewmodels/grade_sheet_view_model.dart",
+          "line": 173,
+          "end_line": 187,
+          "label": "publish / trả lại"
+        },
+        {
+          "path": "lib/views/grade_sheet_screen.dart",
+          "line": 648,
+          "end_line": 687,
+          "label": "GradeSheetScreen (head)"
+        },
+        {
+          "path": "lib/viewmodels/student/results_view_model.dart",
+          "line": 30,
+          "end_line": 55,
+          "label": "ResultsViewModel.load()"
+        }
+      ]
+    },
+    {
+      "id": "repo",
+      "type": "backend",
+      "label": "Repository",
+      "sublabel": "data",
+      "sources": [
+        {
+          "path": "lib/data/repositories/grade_repository.dart",
+          "line": 33,
+          "end_line": 68,
+          "label": "saveGrades / publish / trả lại"
+        },
+        {
+          "path": "lib/data/repositories/academic_repository.dart",
+          "line": 251,
+          "end_line": 263,
+          "label": "sessionsOfLecturerInClass"
+        }
+      ]
+    },
+    {
+      "id": "fs",
+      "type": "database",
+      "label": "Firestore",
+      "sublabel": "+ Rules",
+      "sources": [
+        {
+          "path": "firebase/firestore.rules",
+          "line": 82,
+          "end_line": 107,
+          "label": "classes: quyền đổi gradeStatus"
+        },
+        {
+          "path": "firebase/firestore.rules",
+          "line": 139,
+          "end_line": 176,
+          "label": "grades: đọc / tạo / sửa"
+        },
+        {
+          "path": "firebase/firestore.rules",
+          "line": 113,
+          "end_line": 117,
+          "label": "sessions: quyền đọc"
+        }
+      ]
+    },
+    {
+      "id": "sv",
+      "type": "external",
+      "label": "Sinh viên",
+      "sublabel": "student",
+      "sources": [
+        {
+          "path": "lib/views/student/grade_report_screen.dart",
+          "line": 36,
+          "end_line": 60,
+          "label": "Sinh viên xem điểm"
+        }
+      ]
+    }
+  ],
+  "segments": [
+    {
+      "from": 167,
+      "to": 321,
+      "label": "4a · Công bố (hoặc)"
+    },
+    {
+      "from": 341,
+      "to": 495,
+      "label": "4b · Trả lại (hoặc)"
+    },
+    {
+      "from": 515,
+      "to": 669,
+      "label": "5 · Sinh viên xem điểm"
+    }
+  ],
+  "messages": [
+    {
+      "id": "publish",
+      "from": "head",
+      "to": "ui",
+      "y": 195,
+      "label": "mở bảng điểm, bấm Công bố: publish()",
+      "variant": "emphasis"
+    },
+    {
+      "id": "publish-repo",
+      "from": "ui",
+      "to": "repo",
+      "y": 223,
+      "label": "publish(course)",
+      "variant": "emphasis"
+    },
+    {
+      "id": "publish-batch",
+      "from": "repo",
+      "to": "fs",
+      "y": 251,
+      "label": "batch.update: lớp + từng bản ghi điểm",
+      "variant": "emphasis"
+    },
+    {
+      "id": "publish-rule",
+      "from": "fs",
+      "to": "repo",
+      "y": 279,
+      "label": "Rules: head cùng bộ môn · lớp submitted",
+      "variant": "security"
+    },
+    {
+      "id": "publish-ok",
+      "from": "ui",
+      "to": "head",
+      "y": 307,
+      "label": "lớp published · điểm published: true",
+      "variant": "return"
+    },
+    {
+      "id": "return",
+      "from": "head",
+      "to": "ui",
+      "y": 369,
+      "label": "Trả lại + lý do: returnToLecturer(note)",
+      "variant": "dashed"
+    },
+    {
+      "id": "return-repo",
+      "from": "ui",
+      "to": "repo",
+      "y": 397,
+      "label": "returnToLecturer(course, note)",
+      "variant": "dashed"
+    },
+    {
+      "id": "return-upd",
+      "from": "repo",
+      "to": "fs",
+      "y": 425,
+      "label": "update gradeStatus + headNote",
+      "variant": "dashed"
+    },
+    {
+      "id": "return-rule",
+      "from": "fs",
+      "to": "repo",
+      "y": 453,
+      "label": "Rules: head · submitted → returned",
+      "variant": "security"
+    },
+    {
+      "id": "return-ok",
+      "from": "ui",
+      "to": "head",
+      "y": 481,
+      "label": "lớp returned, headNote = lý do (GV sửa, gửi lại)",
+      "variant": "return"
+    },
+    {
+      "id": "stu-open",
+      "from": "sv",
+      "to": "ui",
+      "y": 543,
+      "label": "mở Điểm học kỳ",
+      "variant": "default"
+    },
+    {
+      "id": "stu-load",
+      "from": "ui",
+      "to": "repo",
+      "y": 571,
+      "label": "load(): publishedGradesOf(uid)",
+      "variant": "default"
+    },
+    {
+      "id": "stu-q",
+      "from": "repo",
+      "to": "fs",
+      "y": 599,
+      "label": "grades where studentId + published == true",
+      "variant": "default"
+    },
+    {
+      "id": "stu-rule",
+      "from": "fs",
+      "to": "repo",
+      "y": 627,
+      "label": "Rules: studentId == uid · published == true",
+      "variant": "security"
+    },
+    {
+      "id": "stu-show",
+      "from": "ui",
+      "to": "sv",
+      "y": 655,
+      "label": "hiện điểm đã công bố",
+      "variant": "return"
+    }
+  ],
+  "activations": [
+    {
+      "participant": "head",
+      "from": 190,
+      "to": 312,
+      "type": "external"
+    },
+    {
+      "participant": "ui",
+      "from": 190,
+      "to": 312,
+      "type": "frontend"
+    },
+    {
+      "participant": "repo",
+      "from": 218,
+      "to": 284,
+      "type": "backend"
+    },
+    {
+      "participant": "fs",
+      "from": 246,
+      "to": 284,
+      "type": "database"
+    },
+    {
+      "participant": "head",
+      "from": 364,
+      "to": 486,
+      "type": "external"
+    },
+    {
+      "participant": "ui",
+      "from": 364,
+      "to": 486,
+      "type": "frontend"
+    },
+    {
+      "participant": "repo",
+      "from": 392,
+      "to": 458,
+      "type": "backend"
+    },
+    {
+      "participant": "fs",
+      "from": 420,
+      "to": 458,
+      "type": "database"
+    },
+    {
+      "participant": "sv",
+      "from": 538,
+      "to": 660,
+      "type": "external"
+    },
+    {
+      "participant": "ui",
+      "from": 538,
+      "to": 660,
+      "type": "frontend"
+    },
+    {
+      "participant": "repo",
+      "from": 566,
+      "to": 632,
+      "type": "backend"
+    },
+    {
+      "participant": "fs",
+      "from": 594,
+      "to": 632,
+      "type": "database"
+    }
+  ]
+}
